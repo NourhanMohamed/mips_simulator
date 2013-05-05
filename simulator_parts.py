@@ -101,12 +101,13 @@ def decode(txt_instruction):
 		opcode,function,rs,rt,rd,shamt)
 	elif inst_type == I_TYPE:
 		opcode = int(instruction[0], 2)
-		if re.match('\d*\(\$[a-z]\d\)', instruction[2]):
-			rs = hex(int(registers[instruction[2][2:5]], 2))
-			offset = int(instruction[2][0])
+		if re.match('\d+\(\$[a-z]\d\)', instruction[2]):
+			off = re.match('\d+', instruction[2]).group()
+			offset = int(off)
 			if offset%4 != 0:
 				print "Invalid Offset!"
 				return
+			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
 		else:
 			rs = hex(int(registers[instruction[2]], 2))
 			offset = int(instruction[3])
@@ -117,7 +118,6 @@ def decode(txt_instruction):
 		pc_relative = int(instruction[0],2) * 4
 		j_address = '0b1111' + bin(pc_relative)[2:]
 		print "Opcode is %i, Address %s" % (opcode,j_address)
-
 	control_signals = control(txt_op)
 	bool_to_signal = { True:1, False:0 }
 	print "Generating control signals..."
@@ -130,6 +130,10 @@ def decode(txt_instruction):
 	print "RegWrite = %i" % bool_to_signal[control_signals["RegWrite"]]
 	print "ALUSrc = %i" % bool_to_signal[control_signals["ALUSrc"]]
 	print "ALUOp = %i" % control_signals["ALUOp"]
+
+
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-decode('sw $s1, 0($s0)')
+decode('sw $s1, 102($s0)')
+
+#ALUOp still missing
