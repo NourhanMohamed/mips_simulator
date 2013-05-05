@@ -148,7 +148,7 @@ def decode(txt_instruction):
 			rt = 0
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
 		opcode,function,rs,rt,rd,shamt)
-		result = execute_rformat(txt_op, int(rs,16), int(rt,16), shamt)
+		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
 	elif inst_type == I_TYPE:
 		opcode = int(instruction[0], 2)
 		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
@@ -163,7 +163,7 @@ def decode(txt_instruction):
 			offset = int(instruction[3])
 		rt = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
-		result = execute_iformat(txt_op, int(rs,16), int(rt,16), offset)
+		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
 		if opcode == 3:
