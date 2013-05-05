@@ -31,33 +31,69 @@ I_TYPE = 1
 J_TYPE = 2
 
 def control(operation):
-		reg_dst = branch = mem_read = mem_to_reg = mem_write = reg_write = alu_src = jump = False
-		alu_op = 0
-		if operation in r_instructions:
-			reg_dst = True
+	reg_dst = branch = mem_read = mem_to_reg = mem_write = reg_write = alu_src = jump = False
+	alu_op = 0
+	if operation in r_instructions:
+		reg_dst = True
 
-		if operation == "beq" or operation == "bne":
-			branch = True
+	if operation == "beq" or operation == "bne":
+		branch = True
 
-		if operation == "jal" or operation == "j" or operation == "jr":
-			jump = True
+	if operation == "jal" or operation == "j" or operation == "jr":
+		jump = True
 
-		if operation == "lw" or operation == "lh" or operation == "lb" or operation == "lhu" or operation == "lbu":
-			mem_read = True
-			mem_to_reg = True
+	if operation == "lw" or operation == "lh" or operation == "lb" or operation == "lhu" or operation == "lbu":
+		mem_read = True
+		mem_to_reg = True
 
-		if operation == "sw" or operation == "sh" or operation == "sb":
-			mem_write = True
+	if operation == "sw" or operation == "sh" or operation == "sb":
+		mem_write = True
 
-		if not branch or not jump or not mem_write:
-			reg_write = True
+	if not branch or not jump or not mem_write:
+		reg_write = True
 
-		if not branch or not jump or not reg_dst:
-			alu_src = True
+	if not branch or not jump or not reg_dst:
+		alu_src = True
 
-		control_signals = { "RegDst":reg_dst, "Branch":branch, "MemRead":mem_read, "MemToReg":mem_to_reg,
-		"MemWrite":mem_write, "RegWrite":reg_write, "ALUSrc":alu_src, "Jump":jump, "ALUOp":alu_op }
-		return control_signals
+	control_signals = { "RegDst":reg_dst, "Branch":branch, "MemRead":mem_read, "MemToReg":mem_to_reg,
+	"MemWrite":mem_write, "RegWrite":reg_write, "ALUSrc":alu_src, "Jump":jump, "ALUOp":alu_op }
+	return control_signals
+
+def execute_rformat(txt_inst, operand1, operand2, shamt):
+	result = 0
+	if txt_inst == "add":
+		result = operand1 + operand2
+	elif txt_inst == "sub":
+		result = operand1 - operand2
+	elif txt_inst == "sll":
+		result = operand1 * 2**shamt
+	elif txt_inst == "srl":
+		result = operand1 / 2**shamt
+	elif txt_inst == "and":
+		result = operand1 and operand2
+	elif txt_inst == "or":
+		result = operand1 or operand2
+	elif txt_inst == "nor":
+		result = not (operand1 or operand2)
+	elif txt_inst == "slt":
+		result = (0, 1)[operand1 > operand2]
+	elif txt_inst == "jr":
+		result = operand1
+	return result
+
+def execute_iformat(txt_inst, operand1, operand2, offset):
+	result = 0
+	if txt_inst == "addi":
+		result = operand1 + offset
+	elif txt_inst == "andi":
+		result = operand1 & offset
+	elif txt_inst == "ori":
+		result = operand1 | offset
+	elif txt_inst == "beq":
+		result = (0, 1)[operand1 == operand2] 
+	elif txt_inst == "bne":
+		result = (0, 1)[operand1 != operand2]
+	return result
 
 def fetch(address):
 	print "Now Fetching..."
@@ -66,7 +102,7 @@ def fetch(address):
 def decode(txt_instruction):
 	txt_instruction = string.lower(txt_instruction)
 	print "Decoding..."
-	instruction = re.split('\s|,\s',txt_instruction)
+	instruction = re.split("\s|,\s",txt_instruction)
 	inst_type = None
 	txt_op = instruction[0]
 	try:
@@ -87,37 +123,6 @@ def decode(txt_instruction):
 	if not instruction[0]:
 		return
 
-	if inst_type == R_TYPE:
-		opcode = 0
-		shamt = 0
-		function = int(instruction[0], 2)
-		rs = hex(int(registers[instruction[2]], 2))
-		rt = hex(int(registers[instruction[3]], 2))
-		rd = hex(int(registers[instruction[1]], 2))
-		if function == 0 or function == 2:
-			shamt = rt
-			rt = 0
-		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
-		opcode,function,rs,rt,rd,shamt)
-	elif inst_type == I_TYPE:
-		opcode = int(instruction[0], 2)
-		if re.match('\d+\(\$[a-z]\d\)', instruction[2]):
-			off = re.match('\d+', instruction[2]).group()
-			offset = int(off)
-			if offset%4 != 0:
-				print "Invalid Offset!"
-				return
-			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
-		else:
-			rs = hex(int(registers[instruction[2]], 2))
-			offset = int(instruction[3])
-		rt = hex(int(registers[instruction[1]], 2))
-		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
-	elif inst_type == J_TYPE:
-		opcode = int(instruction[0], 2)
-		pc_relative = int(instruction[0],2) * 4
-		j_address = '0b1111' + bin(pc_relative)[2:]
-		print "Opcode is %i, Address %s" % (opcode,j_address)
 	control_signals = control(txt_op)
 	bool_to_signal = { True:1, False:0 }
 	print "Generating control signals..."
@@ -131,9 +136,46 @@ def decode(txt_instruction):
 	print "ALUSrc = %i" % bool_to_signal[control_signals["ALUSrc"]]
 	print "ALUOp = %i" % control_signals["ALUOp"]
 
+	if inst_type == R_TYPE:
+		opcode = 0
+		shamt = 0
+		function = int(instruction[0], 2)
+		rs = hex(int(registers[instruction[2]], 2))
+		rt = hex(int(registers[instruction[3]], 2))
+		rd = hex(int(registers[instruction[1]], 2))
+		if function == 0 or function == 2:
+			shamt = rt
+			rt = 0
+		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
+		opcode,function,rs,rt,rd,shamt)
+		result = execute_rformat(txt_op, int(rs,16), int(rt,16), shamt)
+	elif inst_type == I_TYPE:
+		opcode = int(instruction[0], 2)
+		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
+			off = re.match('\d+', instruction[2]).group()
+			offset = int(off)
+			if offset%4 != 0:
+				print "Terminating... Invalid Offset!"
+				return
+			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
+		else:
+			rs = hex(int(registers[instruction[2]], 2))
+			offset = int(instruction[3])
+		rt = hex(int(registers[instruction[1]], 2))
+		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
+		result = execute_iformat(txt_op, int(rs,16), int(rt,16), offset)
+	elif inst_type == J_TYPE:
+		opcode = int(instruction[0], 2)
+		if opcode == 3:
+			pc_relative = int(instruction[0],2) * 4
+			j_address = "0b1111" + bin(pc_relative)[2:]
+		elif opcode == 2:
+			j_address = hex(int(instruction[0],2))
+		print "Opcode is %i, Address %s" % (opcode,j_address)
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
 decode('sw $s1, 102($s0)')
 
 #ALUOp still missing
+#jal pc relative concat still missing
