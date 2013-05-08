@@ -1,6 +1,8 @@
 import re
 import struct
 import string
+import bitstring
+from bitstring import BitArray
 
 r_instructions = {
 	"add":"0b100000", "sub":"0b100010", "sll":"0b000000", "srl":"0b000010", "and":"0b100100", "or":"0b100101",
@@ -248,6 +250,7 @@ def memory_read(address, txt_inst, reg_to_write):
       c = main_memory[address_2]
       d = main_memory[address_3]
       value = ''.join((a,b,c,d))
+      value = binary_to_int(value)
   elif txt_inst == "lhu":
     address = complete_address(address)
     address_1 = bin(int(address, 2) + 1)
@@ -257,12 +260,14 @@ def memory_read(address, txt_inst, reg_to_write):
       b = main_memory[address]
       c = main_memory[address_1]
       value = ''.join((a,b,c))
+      value = binary_to_int(value)
   elif txt_inst == "lbu":
     address = complete_address(address)
     if main_memory.has_key(address):
       a = '000000000000000000000000'
       b = main_memory[address]
       value = ''.join((a,b))
+      value = binary_to_int(value)
   elif txt_inst == "lb":
     address = complete_address(address)
     if main_memory.has_key(address):  
@@ -270,9 +275,11 @@ def memory_read(address, txt_inst, reg_to_write):
       if b[0] == 1:
         a = '111111111111111111111111'
         value = ''.join((a,b))
+        value = binary_to_int(value)
       else: 
         a = '000000000000000000000000'
         value = ''.join((a,b))
+        value = binary_to_int(value)
   elif txt_inst == "lh":
     address = complete_address(address)
     address_1 = bin(int(address, 2) + 1)
@@ -283,13 +290,16 @@ def memory_read(address, txt_inst, reg_to_write):
       if b[0] == 1:
         a = '1111111111111111'
         value = ''.join((a,b,c))
+        value = binary_to_int(value)
       else: 
         a = '0000000000000000'
         value = ''.join((a,b,c))
+        value = binary_to_int(value)
   elif txt_inst == "lui":
         a = immediate_value
         b = '0000000000000000'
         value = ''.join((a,b))
+        value = binary_to_int(value)
   write_back(value, reg_to_write)
 
 # write back the value in the specified register
@@ -301,7 +311,6 @@ def write_back(value, reg_to_write):
 def complete_address(value):
   updated_value = value[2:]
   length = len(updated_value)
-  print length
   if length > 32 or length == 0:
     return 'none' 
   elif length == 32:
@@ -311,4 +320,15 @@ def complete_address(value):
     value = str(updated_value)
     for x in range(0, limit):
       value = ''.join(('0',value))
-    return value
+    return value 
+# to transform the integer to binary string of 32 bits to be written in memory
+def value_to_write(value):
+	b = BitArray(int=value, length=32)
+	b = b.bin
+	return b
+
+# transform binary string loaded from memory to int 
+def binary_to_int(value):
+	a = BitArray(bin= value)
+	a = a.int 
+	return a
