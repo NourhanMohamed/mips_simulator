@@ -334,7 +334,7 @@ def decode(txt_instruction):
 		rt = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
 		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
-		memory(complete_address(value_to_write(result) + ""), txt_op, control_signals, write_val = int(rt, 16),
+		memory(complete_address(value_to_write(result)), txt_op, control_signals, write_val = int(rt, 16),
 			reg_to_write = int(rs, 16))
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
