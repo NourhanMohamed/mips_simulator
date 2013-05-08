@@ -31,6 +31,9 @@ for i in range(0,32):
 R_TYPE = 0
 I_TYPE = 1
 J_TYPE = 2
+BIN = 3
+INT = 4
+HEX = 5
 
 def control(operation):
 	reg_dst = branch = mem_read = mem_to_reg = mem_write = reg_write = alu_src = jump = False
@@ -305,6 +308,10 @@ def memory_read(address, txt_inst, reg_to_write):
 # write back the value in the specified register
 def write_back(value, reg_to_write):
   print value
+  if reg_to_write == 0:
+  	print "cannot write to register 0"
+  else:
+  	reg_file[reg_to_write] = value 
   return
 
 # to always make sure the address is in the right format  
@@ -320,7 +327,8 @@ def complete_address(value):
     value = str(updated_value)
     for x in range(0, limit):
       value = ''.join(('0',value))
-    return value 
+    return value
+
 # to transform the integer to binary string of 32 bits to be written in memory
 def value_to_write(value):
 	b = BitArray(int=value, length=32)
@@ -332,3 +340,19 @@ def binary_to_int(value):
 	a = BitArray(bin= value)
 	a = a.int 
 	return a
+
+def binary_or_int_to_hex(value, type):
+	if type == BIN: #binary_to_hex
+		a = hex(int(value, 2))
+		return a 
+	elif type == INT: #int_to_hex
+		a = hex(value)
+		return a 
+
+def hex_to_binary_or_int(value, type):
+	if type == INT:
+		a = int(value, 16)
+		return a 
+	elif type == BIN:
+		a = bin(int('0xa', 16))
+		return a 
