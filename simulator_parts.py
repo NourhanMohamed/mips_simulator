@@ -181,3 +181,133 @@ decode('sw $s1, 102($s0)')
 
 #ALUOp still missing
 #jal pc relative concat still missing
+
+main_memory = {}
+
+# sw: store 32 bits in 4 consecutive addresses (big endian)
+# sh: store rightmost 16 bits in 2 consecutive addresses (big endian)
+
+def memory(address, txt_inst, control_signals, write_val=None, reg_to_write=None):
+  if control_signals["MemWrite"]:
+    if write_val != None:
+      print "writing to memory ..."
+      memory_write(address, txt_inst, write_val)
+    else: 
+      print "cannot write a none value to the memory"
+  elif control_signals["MemRead"]:
+    if reg_to_write != None:
+      print "Reading from memory ..."
+    else:
+      print "cannot load into an unspecified register"
+  return
+
+def memory_write(address, txt_inst, write_val):
+  if txt_inst == "sw":
+    address = complete_address(address)
+    main_memory[address] = write_val[0:8]
+    address_1 = bin(int(address, 2) + 1)
+    address_1 = complete_address(address_1)
+    print address_1
+    main_memory[address_1] = write_val[8:16]
+    print main_memory.items()
+    address_2 = bin(int(address_1, 2) + 1)
+    address_2 = complete_address(address_2)
+    main_memory[address_2] = write_val [16:24]
+    print main_memory.items()
+    address_3 = bin(int(address_2, 2) + 1)
+    address_3 = complete_address(address_3)
+    main_memory[address_3] = write_val[24:32]
+    print main_memory.items()
+  elif txt_inst == "sh":
+    address = complete_address(address)
+    main_memory[address] = write_val [16:24]
+    print main_memory.items()
+    address_1 = bin(int(address, 2) + 1)
+    address_1 = complete_address(address_1)
+    main_memory[address_1] = write_val[24:32] 
+    print main_memory.items()
+  elif txt_inst == "sb":
+    address = complete_address(address)
+    main_memory[address] = write_val[24:32]
+    print main_memory.items()
+
+def memory_read(address, txt_inst, reg_to_write):
+  value = 'none'
+  if txt_inst == "lw":
+    address = complete_address(address)
+    address_1 = bin(int(address, 2) + 1)
+    address_1 = complete_address(address_1)
+    address_2 = bin(int(address_1, 2) + 1)
+    address_2 = complete_address(address_2)
+    address_3 = bin(int(address_2, 2) + 1)
+    address_3 = complete_address(address_3)
+    if main_memory.has_key(address) and main_memory.has_key(address_1) and main_memory.has_key(address_2) and main_memory.has_key(address_3):
+      a = main_memory[address]
+      b = main_memory[address_1]
+      c = main_memory[address_2]
+      d = main_memory[address_3]
+      value = ''.join((a,b,c,d))
+  elif txt_inst == "lhu":
+    address = complete_address(address)
+    address_1 = bin(int(address, 2) + 1)
+    address_1 = complete_address(address_1)
+    if main_memory.has_key(address) and main_memory.has_key(address_1):
+      a = '0000000000000000'
+      b = main_memory[address]
+      c = main_memory[address_1]
+      value = ''.join((a,b,c))
+  elif txt_inst == "lbu":
+    address = complete_address(address)
+    if main_memory.has_key(address):
+      a = '000000000000000000000000'
+      b = main_memory[address]
+      value = ''.join((a,b))
+  elif txt_inst == "lb":
+    address = complete_address(address)
+    if main_memory.has_key(address):  
+      b = main_memory[address]
+      if b[0] == 1:
+        a = '111111111111111111111111'
+        value = ''.join((a,b))
+      else: 
+        a = '000000000000000000000000'
+        value = ''.join((a,b))
+  elif txt_inst == "lh":
+    address = complete_address(address)
+    address_1 = bin(int(address, 2) + 1)
+    address_1 = complete_address(address_1)
+    if main_memory.has_key(address) and main_memory.has_key(address_1):
+      b = main_memory[address]
+      c = main_memory[address_1]
+      if b[0] == 1:
+        a = '1111111111111111'
+        value = ''.join((a,b,c))
+      else: 
+        a = '0000000000000000'
+        value = ''.join((a,b,c))
+  elif txt_inst == "lui":
+        a = immediate_value
+        b = '0000000000000000'
+        value = ''.join((a,b))
+  write_back(value, reg_to_write)
+
+# write back the value in the specified register
+def write_back(value, reg_to_write):
+  print value
+  return
+
+# to always make sure the address is in the right format  
+def complete_address(value):
+  updated_value = value[2:]
+  length = len(updated_value)
+  print length
+  if length > 32 or length == 0:
+    return 'none' 
+  elif length == 32:
+    return updated_value
+  else: 
+    limit = 32-length
+    value = str(updated_value)
+    for x in range(0, limit):
+      value = ''.join(('0',value))
+    return value
