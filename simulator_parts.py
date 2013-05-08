@@ -83,9 +83,9 @@ def execute_rformat(txt_inst, operand1, operand2, shamt):
 
 def execute_iformat(txt_inst, operand1, operand2, offset):
 	result = 0
-	if txt_inst == "addi" || txt_inst == "lw" || txt_inst == "lh" || txt_inst == "lb"
-		|| txt_inst == "lhu" || txt_inst == "lbu" || txt_inst == "sw" || txt_inst == "sh" 
-		|| txt_inst == "sb":
+	if txt_inst == "addi" or txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" \
+		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
+		or txt_inst == "sb":
 		result = operand1 + offset
 	elif txt_inst == "andi":
 		result = operand1 & offset
@@ -241,7 +241,8 @@ def memory_read(address, txt_inst, reg_to_write):
     address_2 = complete_address(address_2)
     address_3 = bin(int(address_2, 2) + 1)
     address_3 = complete_address(address_3)
-    if main_memory.has_key(address) and main_memory.has_key(address_1) and main_memory.has_key(address_2) and main_memory.has_key(address_3):
+    if main_memory.has_key(address) and main_memory.has_key(address_1) \
+    	and main_memory.has_key(address_2) and main_memory.has_key(address_3):
       a = main_memory[address]
       b = main_memory[address_1]
       c = main_memory[address_2]
