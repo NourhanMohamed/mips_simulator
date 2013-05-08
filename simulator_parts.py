@@ -64,6 +64,50 @@ def control(operation):
 	"MemWrite":mem_write, "RegWrite":reg_write, "ALUSrc":alu_src, "Jump":jump, "ALUOp":alu_op }
 	return control_signals
 
+
+# to always make sure the address is in the right format  
+def complete_address(value):
+  updated_value = value[2:]
+  length = len(updated_value)
+  if length > 32 or length == 0:
+    return 'none' 
+  elif length == 32:
+    return updated_value
+  else: 
+    limit = 32-length
+    value = str(updated_value)
+    for x in range(0, limit):
+      value = ''.join(('0',value))
+    return value
+
+# to transform the integer to binary string of 32 bits to be written in memory
+def value_to_write(value):
+  b = BitArray(int=value, length=32)
+  b = b.bin
+  return b
+
+# transform binary string loaded from memory to int 
+def binary_to_int(value):
+  a = BitArray(bin= value)
+  a = a.int 
+  return a
+
+def binary_or_int_to_hex(value, type):
+  if type == BIN: #binary_to_hex
+    a = hex(int(value, 2))
+    return a 
+  elif type == INT: #int_to_hex
+    a = hex(value)
+    return a 
+
+def hex_to_binary_or_int(value, type):
+  if type == INT:
+    a = int(value, 16)
+    return a 
+  elif type == BIN:
+    a = bin(int('0xa', 16))
+    return a 
+
 def execute_rformat(txt_inst, operand1, operand2, shamt):
 	result = 0
 	if txt_inst == "add":
@@ -101,91 +145,6 @@ def execute_iformat(txt_inst, operand1, operand2, offset):
 	elif txt_inst == "bne":
 		result = (0, 1)[operand1 != operand2]
 	return result
-
-def fetch(address):
-	print "Now Fetching..."
-	instruction = inst_memory[address]
-
-def decode(txt_instruction):
-	txt_instruction = string.lower(txt_instruction)
-	print "Decoding..."
-	instruction = re.split("\s|,\s",txt_instruction)
-	inst_type = None
-	txt_op = instruction[0]
-	try:
-		instruction[0] = r_instructions[instruction[0]]
-		inst_type = R_TYPE
-	except KeyError:
-		try:
-			instruction[0] = i_instructions[instruction[0]]
-			inst_type = I_TYPE
-		except KeyError:
-			try:
-				instruction[0] = j_instructions[instruction[0]]
-				inst_type = J_TYPE
-			except KeyError:
-				print "Invalid instruction!"
-				instruction[0] = None
-
-	if not instruction[0]:
-		return
-
-	control_signals = control(txt_op)
-	bool_to_signal = { True:1, False:0 }
-	print "Generating control signals..."
-	print "RegDst = %i" % bool_to_signal[control_signals["RegDst"]]
-	print "Branch = %i" % bool_to_signal[control_signals["Branch"]]
-	print "Jump = %i" % bool_to_signal[control_signals["Jump"]]
-	print "MemRead = %i" % bool_to_signal[control_signals["MemRead"]]
-	print "MemWrite = %i" % bool_to_signal[control_signals["MemWrite"]]
-	print "MemToReg = %i" % bool_to_signal[control_signals["MemToReg"]]
-	print "RegWrite = %i" % bool_to_signal[control_signals["RegWrite"]]
-	print "ALUSrc = %i" % bool_to_signal[control_signals["ALUSrc"]]
-	print "ALUOp = %i" % control_signals["ALUOp"]
-
-	if inst_type == R_TYPE:
-		opcode = 0
-		shamt = 0
-		function = int(instruction[0], 2)
-		rs = hex(int(registers[instruction[2]], 2))
-		rt = hex(int(registers[instruction[3]], 2))
-		rd = hex(int(registers[instruction[1]], 2))
-		if function == 0 or function == 2:
-			shamt = rt
-			rt = 0
-		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
-		opcode,function,rs,rt,rd,shamt)
-		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
-	elif inst_type == I_TYPE:
-		opcode = int(instruction[0], 2)
-		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
-			off = re.match('\d+', instruction[2]).group()
-			offset = int(off)
-			if offset%4 != 0:
-				print "Terminating... Invalid Offset!"
-				return
-			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
-		else:
-			rs = hex(int(registers[instruction[2]], 2))
-			offset = int(instruction[3])
-		rt = hex(int(registers[instruction[1]], 2))
-		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
-		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
-	elif inst_type == J_TYPE:
-		opcode = int(instruction[0], 2)
-		if opcode == 3:
-			pc_relative = int(instruction[0],2) * 4
-			j_address = "0b1111" + bin(pc_relative)[2:]
-		elif opcode == 2:
-			j_address = hex(int(instruction[0],2))
-		print "Opcode is %i, Address %s" % (opcode,j_address)
-
-		# value = struct.unpack(">h", s) for getting 16 bits from 32!
-
-decode('sw $s1, 102($s0)')
-
-#ALUOp still missing
-#jal pc relative concat still missing
 
 main_memory = {}
 
@@ -305,6 +264,94 @@ def memory_read(address, txt_inst, reg_to_write):
         value = binary_to_int(value)
   write_back(value, reg_to_write)
 
+def fetch(address):
+	print "Now Fetching..."
+	instruction = inst_memory[address]
+
+def decode(txt_instruction):
+	txt_instruction = string.lower(txt_instruction)
+	print "Decoding..."
+	instruction = re.split("\s|,\s",txt_instruction)
+	inst_type = None
+	txt_op = instruction[0]
+	try:
+		instruction[0] = r_instructions[instruction[0]]
+		inst_type = R_TYPE
+	except KeyError:
+		try:
+			instruction[0] = i_instructions[instruction[0]]
+			inst_type = I_TYPE
+		except KeyError:
+			try:
+				instruction[0] = j_instructions[instruction[0]]
+				inst_type = J_TYPE
+			except KeyError:
+				print "Invalid instruction!"
+				instruction[0] = None
+
+	if not instruction[0]:
+		return
+
+	control_signals = control(txt_op)
+	bool_to_signal = { True:1, False:0 }
+	print "Generating control signals..."
+	print "RegDst = %i" % bool_to_signal[control_signals["RegDst"]]
+	print "Branch = %i" % bool_to_signal[control_signals["Branch"]]
+	print "Jump = %i" % bool_to_signal[control_signals["Jump"]]
+	print "MemRead = %i" % bool_to_signal[control_signals["MemRead"]]
+	print "MemWrite = %i" % bool_to_signal[control_signals["MemWrite"]]
+	print "MemToReg = %i" % bool_to_signal[control_signals["MemToReg"]]
+	print "RegWrite = %i" % bool_to_signal[control_signals["RegWrite"]]
+	print "ALUSrc = %i" % bool_to_signal[control_signals["ALUSrc"]]
+	print "ALUOp = %i" % control_signals["ALUOp"]
+
+	if inst_type == R_TYPE:
+		opcode = 0
+		shamt = 0
+		function = int(instruction[0], 2)
+		rs = hex(int(registers[instruction[2]], 2))
+		rt = hex(int(registers[instruction[3]], 2))
+		rd = hex(int(registers[instruction[1]], 2))
+		if function == 0 or function == 2:
+			shamt = rt
+			rt = 0
+		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
+		opcode,function,rs,rt,rd,shamt)
+		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
+		memory(None, txt_op, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
+	elif inst_type == I_TYPE:
+		opcode = int(instruction[0], 2)
+		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
+			off = re.match('\d+', instruction[2]).group()
+			offset = int(off)
+			if offset%4 != 0:
+				print "Terminating... Invalid Offset!"
+				return
+			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
+		else:
+			rs = hex(int(registers[instruction[2]], 2))
+			offset = int(instruction[3])
+		rt = hex(int(registers[instruction[1]], 2))
+		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
+		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
+		memory(complete_address(value_to_write(result) + ""), txt_op, control_signals, write_val = int(rt, 16),
+			reg_to_write = int(rs, 16))
+	elif inst_type == J_TYPE:
+		opcode = int(instruction[0], 2)
+		if opcode == 3:
+			pc_relative = int(instruction[0],2) * 4
+			j_address = "0b1111" + bin(pc_relative)[2:]
+		elif opcode == 2:
+			j_address = hex(int(instruction[0],2))
+		print "Opcode is %i, Address %s" % (opcode,j_address)
+
+		# value = struct.unpack(">h", s) for getting 16 bits from 32!
+
+decode('sw $s1, 1024($s0)')
+
+#ALUOp still missing
+#jal pc relative concat still missing
+
 # write back the value in the specified register
 def write_back(value, reg_to_write):
   print value
@@ -313,46 +360,3 @@ def write_back(value, reg_to_write):
   else:
   	reg_file[reg_to_write] = value 
   return
-
-# to always make sure the address is in the right format  
-def complete_address(value):
-  updated_value = value[2:]
-  length = len(updated_value)
-  if length > 32 or length == 0:
-    return 'none' 
-  elif length == 32:
-    return updated_value
-  else: 
-    limit = 32-length
-    value = str(updated_value)
-    for x in range(0, limit):
-      value = ''.join(('0',value))
-    return value
-
-# to transform the integer to binary string of 32 bits to be written in memory
-def value_to_write(value):
-	b = BitArray(int=value, length=32)
-	b = b.bin
-	return b
-
-# transform binary string loaded from memory to int 
-def binary_to_int(value):
-	a = BitArray(bin= value)
-	a = a.int 
-	return a
-
-def binary_or_int_to_hex(value, type):
-	if type == BIN: #binary_to_hex
-		a = hex(int(value, 2))
-		return a 
-	elif type == INT: #int_to_hex
-		a = hex(value)
-		return a 
-
-def hex_to_binary_or_int(value, type):
-	if type == INT:
-		a = int(value, 16)
-		return a 
-	elif type == BIN:
-		a = bin(int('0xa', 16))
-		return a 
