@@ -83,7 +83,9 @@ def execute_rformat(txt_inst, operand1, operand2, shamt):
 
 def execute_iformat(txt_inst, operand1, operand2, offset):
 	result = 0
-	if txt_inst == "addi":
+	if txt_inst == "addi" || txt_inst == "lw" || txt_inst == "lh" || txt_inst == "lb"
+		|| txt_inst == "lhu" || txt_inst == "lbu" || txt_inst == "sw" || txt_inst == "sh" 
+		|| txt_inst == "sb":
 		result = operand1 + offset
 	elif txt_inst == "andi":
 		result = operand1 & offset
