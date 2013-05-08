@@ -144,30 +144,20 @@ def execute_iformat(txt_inst, operand1, operand2, offset):
 
 main_memory = {}
 
-# sw: store 32 bits in 4 consecutive addresses (big endian)
-# sh: store rightmost 16 bits in 2 consecutive addresses (big endian)
-
-def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None):
-	if address != None:
-		print "Executing memory stage ..."
-		if control_signals["MemWrite"]:
-			if write_val != None:
-				print "writing to memory ..."
-				memory_write(address, txt_inst, write_val)
-			else:
-				print "cannot write a none value to the memory"
-		elif control_signals["MemRead"] and control_signals["MemToReg"]:
-			if reg_to_write != None:
-				print "Reading from memory ..."
-				memory_read(address, txt_inst, reg_to_write)
-			else:
-				print "cannot load into an unspecified register"
-		else: 
-			if write_val != None and reg_to_write != None:
-				write_val = binary_to_int(write_val)
-				write_back(write_val, reg_to_write, txt_inst)
-			else:
-				print "cannot write back missing value or unspecified register"
+# write back the value in the specified register
+def write_back(value, reg_to_write, txt_inst):
+	print "Executing write back stage ..."
+	if txt_inst == "lui":
+		a = value_to_write(value)[16:32]
+		b = '0000000000000000'
+		value = ''.join((a,b))
+		value =  binary_to_int(value)
+	if reg_to_write == 0:
+		print "cannot write to register 0"
+	else:
+		reg_file[reg_to_write] = value
+		print value 
+		print reg_file[reg_to_write]
 	return
 
 def memory_write(address, txt_inst, write_val):
@@ -264,6 +254,31 @@ def memory_read(address, txt_inst, reg_to_write):
 				value = binary_to_int(value)
 	write_back(value, reg_to_write, txt_inst)
 
+# sw: store 32 bits in 4 consecutive addresses (big endian)
+# sh: store rightmost 16 bits in 2 consecutive addresses (big endian)
+def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None):
+	if address != None:
+		print "Executing memory stage ..."
+		if control_signals["MemWrite"]:
+			if write_val != None:
+				print "writing to memory ..."
+				memory_write(address, txt_inst, write_val)
+			else:
+				print "cannot write a none value to the memory"
+		elif control_signals["MemRead"] and control_signals["MemToReg"]:
+			if reg_to_write != None:
+				print "Reading from memory ..."
+				memory_read(address, txt_inst, reg_to_write)
+			else:
+				print "cannot load into an unspecified register"
+		else: 
+			if write_val != None and reg_to_write != None:
+				write_val = binary_to_int(write_val)
+				write_back(write_val, reg_to_write, txt_inst)
+			else:
+				print "cannot write back missing value or unspecified register"
+	return
+
 def fetch(address):
 	print "Now Fetching..."
 	instruction = inst_memory[address]
@@ -351,22 +366,6 @@ decode('sw $s1, 1024($s0)')
 
 #ALUOp still missing
 #jal pc relative concat still missing
-
-# write back the value in the specified register
-def write_back(value, reg_to_write, txt_inst):
-	print "Executing write back stage ..."
-	if txt_inst == "lui":
-		a = value_to_write(value)[16:32]
-		b = '0000000000000000'
-		value = ''.join((a,b))
-		value =  binary_to_int(value)
-	if reg_to_write == 0:
-		print "cannot write to register 0"
-	else:
-		reg_file[reg_to_write] = value
-		print value 
-		print reg_file[reg_to_write]
-	return
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
