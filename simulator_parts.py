@@ -177,5 +177,14 @@ def decode(txt_instruction):
 
 decode('sw $s1, 102($s0)')
 
+if __name__ == '__main__':
+  if len(sys.argv) < 2:
+    print "Usage: %s <file name>" % sys.argv[0]
+  else:
+    f = open(sys.argv[1])
+    instructions = f.readlines()
+    # intrauctions is now a list of text instractions
+    # call main function here
+
 #ALUOp still missing
 #jal pc relative concat still missing
