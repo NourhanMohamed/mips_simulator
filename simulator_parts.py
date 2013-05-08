@@ -182,7 +182,7 @@ def decode(txt_instruction):
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-#decode('sw $s1, 102($s0)')
+decode('sw $s1, 102($s0)')
 
 #ALUOp still missing
 #jal pc relative concat still missing
