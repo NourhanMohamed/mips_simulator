@@ -1,7 +1,4 @@
-import re
-import struct
-import string
-import bitstring
+import re, struct, string, bitstring, sys
 from bitstring import BitArray
 
 r_instructions = {
@@ -19,9 +16,9 @@ j_instructions = {
 registers = {
 	"$zero":"0b00000", "$at":"0b00001", "$v0":"0b00010", "$v1":"0b00011", "$a0":"0b00100", "$a1":"0b00101",
 	"$a2":"0b00110", "$a3":"0b00111", "$t0":"0b01000", "$t1":"0b01001", "$t2":"0b01010", "$t3":"0b01011",
-	"$t4":"0b01100", "$t5":"0b01101", "$t6":"0b01110", "$t7":"0b01111", "$s0":"0b10000", "$s1":"0b10001", 
-	"$s2":"0b10010", "$s3":"0b10011", "$s4":"0b10100", "$s5":"0b10101", "$s6":"0b10110", "$s7":"0b10111", 
-	"$t8":"0b11000", "$t9":"0b11001", "$k0":"0b11010", "$k1":"0b11011", "$gp":"0b11100", "$sp":"0b11101", 
+	"$t4":"0b01100", "$t5":"0b01101", "$t6":"0b01110", "$t7":"0b01111", "$s0":"0b10000", "$s1":"0b10001",
+	"$s2":"0b10010", "$s3":"0b10011", "$s4":"0b10100", "$s5":"0b10101", "$s6":"0b10110", "$s7":"0b10111",
+	"$t8":"0b11000", "$t9":"0b11001", "$k0":"0b11010", "$k1":"0b11011", "$gp":"0b11100", "$sp":"0b11101",
 	"$fp":"0b11110", "$ra":"0b11111"
 }
 reg_file = []
@@ -141,7 +138,7 @@ def execute_iformat(txt_inst, operand1, operand2, offset):
 	elif txt_inst == "ori":
 		result = operand1 | offset
 	elif txt_inst == "beq":
-		result = (0, 1)[operand1 == operand2] 
+		result = (0, 1)[operand1 == operand2]
 	elif txt_inst == "bne":
 		result = (0, 1)[operand1 != operand2]
 	return result
@@ -156,7 +153,7 @@ def memory(address, txt_inst, control_signals, write_val=None, reg_to_write=None
     if write_val != None:
       print "writing to memory ..."
       memory_write(address, txt_inst, write_val)
-    else: 
+    else:
       print "cannot write a none value to the memory"
   elif control_signals["MemRead"]:
     if reg_to_write != None:
@@ -188,7 +185,7 @@ def memory_write(address, txt_inst, write_val):
     print main_memory.items()
     address_1 = bin(int(address, 2) + 1)
     address_1 = complete_address(address_1)
-    main_memory[address_1] = write_val[24:32] 
+    main_memory[address_1] = write_val[24:32]
     print main_memory.items()
   elif txt_inst == "sb":
     address = complete_address(address)
@@ -232,13 +229,13 @@ def memory_read(address, txt_inst, reg_to_write):
       value = binary_to_int(value)
   elif txt_inst == "lb":
     address = complete_address(address)
-    if main_memory.has_key(address):  
+    if main_memory.has_key(address): 
       b = main_memory[address]
       if b[0] == 1:
         a = '111111111111111111111111'
         value = ''.join((a,b))
         value = binary_to_int(value)
-      else: 
+      else:
         a = '000000000000000000000000'
         value = ''.join((a,b))
         value = binary_to_int(value)
@@ -253,7 +250,7 @@ def memory_read(address, txt_inst, reg_to_write):
         a = '1111111111111111'
         value = ''.join((a,b,c))
         value = binary_to_int(value)
-      else: 
+      else:
         a = '0000000000000000'
         value = ''.join((a,b,c))
         value = binary_to_int(value)
@@ -360,3 +357,12 @@ def write_back(value, reg_to_write):
   else:
   	reg_file[reg_to_write] = value 
   return
+
+if __name__ == '__main__':
+  if len(sys.argv) < 2:
+    print "Usage: %s <file name>" % sys.argv[0]
+  else:
+    f = open(sys.argv[1])
+    instructions = f.readlines()
+    # intrauctions is now a list of text instractions
+    # call main function here
