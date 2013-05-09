@@ -62,46 +62,45 @@ def control(operation):
 
 # to always make sure the address is in the right format  
 def complete_address(value):
-  updated_value = value[2:]
-  length = len(updated_value)
-  if length > 32 or length == 0:
-    return 'none' 
-  elif length == 32:
-    return updated_value
-  else: 
-    limit = 32-length
-    value = str(updated_value)
-    for x in range(0, limit):
-      value = ''.join(('0',value))
-    return value
+	length = len(value)
+	if length > 32 or length == 0:
+		return 'none' 
+	elif length == 32:
+		return value
+	else: 
+		limit = 32-length
+		value = str(value)
+		for x in range(0, limit):
+			value = ''.join(('0',value))
+		return value
 
 # to transform the integer to binary string of 32 bits to be written in memory
 def value_to_write(value):
-  b = BitArray(int=value, length=32)
-  b = b.bin
-  return b
+	b = BitArray(int=value, length=32)
+	b = b.bin
+	return b
 
 # transform binary string loaded from memory to int 
 def binary_to_int(value):
-  a = BitArray(bin= value)
-  a = a.int 
-  return a
+	a = BitArray(bin= value)
+	a = a.int 
+	return a
 
 def binary_or_int_to_hex(value, type):
-  if type == BIN: #binary_to_hex
-    a = hex(int(value, 2))
-    return a 
-  elif type == INT: #int_to_hex
-    a = hex(value)
-    return a 
+	if type == BIN: #binary_to_hex
+		a = hex(int(value, 2))
+		return a 
+	elif type == INT: #int_to_hex
+		a = hex(value)
+		return a 
 
 def hex_to_binary_or_int(value, type):
-  if type == INT:
-    a = int(value, 16)
-    return a 
-  elif type == BIN:
-    a = bin(int('0xa', 16))
-    return a 
+	if type == INT:
+		a = int(value, 16)
+		return a 
+	elif type == BIN:
+		a = bin(int('0xa', 16))
+		return a
 
 def execute_rformat(txt_inst, operand1, operand2, shamt):
 	result = 0
@@ -143,121 +142,142 @@ def execute_iformat(txt_inst, operand1, operand2, offset):
 
 main_memory = {}
 
-# sw: store 32 bits in 4 consecutive addresses (big endian)
-# sh: store rightmost 16 bits in 2 consecutive addresses (big endian)
-
-def memory(address, txt_inst, control_signals, write_val=None, reg_to_write=None):
-  if control_signals["MemWrite"]:
-    if write_val != None:
-      print "writing to memory ..."
-      memory_write(address, txt_inst, write_val)
-    else:
-      print "cannot write a none value to the memory"
-  elif control_signals["MemRead"]:
-    if reg_to_write != None:
-      print "Reading from memory ..."
-    else:
-      print "cannot load into an unspecified register"
-  return
+# write back the value in the specified register
+def write_back(value, reg_to_write, txt_inst):
+	print "Executing write back stage ..."
+	if txt_inst == "lui":
+		a = value_to_write(value)[16:32]
+		b = '0000000000000000'
+		value = ''.join((a,b))
+		value =  binary_to_int(value)
+	if reg_to_write == 0:
+		print "cannot write to register 0"
+	else:
+		reg_file[reg_to_write] = value
+		print value 
+		print reg_file[reg_to_write]
+	return
 
 def memory_write(address, txt_inst, write_val):
-  if txt_inst == "sw":
-    address = complete_address(address)
-    main_memory[address] = write_val[0:8]
-    address_1 = bin(int(address, 2) + 1)
-    address_1 = complete_address(address_1)
-    print address_1
-    main_memory[address_1] = write_val[8:16]
-    print main_memory.items()
-    address_2 = bin(int(address_1, 2) + 1)
-    address_2 = complete_address(address_2)
-    main_memory[address_2] = write_val [16:24]
-    print main_memory.items()
-    address_3 = bin(int(address_2, 2) + 1)
-    address_3 = complete_address(address_3)
-    main_memory[address_3] = write_val[24:32]
-    print main_memory.items()
-  elif txt_inst == "sh":
-    address = complete_address(address)
-    main_memory[address] = write_val [16:24]
-    print main_memory.items()
-    address_1 = bin(int(address, 2) + 1)
-    address_1 = complete_address(address_1)
-    main_memory[address_1] = write_val[24:32]
-    print main_memory.items()
-  elif txt_inst == "sb":
-    address = complete_address(address)
-    main_memory[address] = write_val[24:32]
-    print main_memory.items()
+	if txt_inst == "sw":
+		print write_val
+		address = complete_address(address)
+		main_memory[address] = write_val[0:8]
+		address_1 = bin(int(address, 2) + 1)[2:]
+		address_1 = complete_address(address_1)
+		print address_1
+		main_memory[address_1] = write_val[8:16]
+		print main_memory.items()
+		address_2 = bin(int(address_1, 2) + 1)[2:]
+		address_2 = complete_address(address_2)
+		main_memory[address_2] = write_val [16:24]
+		print main_memory.items()
+		address_3 = bin(int(address_2, 2) + 1)[2:]
+		address_3 = complete_address(address_3)
+		main_memory[address_3] = write_val[24:32]
+		print main_memory.items()
+	elif txt_inst == "sh":
+		address = complete_address(address)
+		main_memory[address] = write_val [16:24]
+		print main_memory.items()
+		address_1 = bin(int(address, 2) + 1)[2:]
+		address_1 = complete_address(address_1)
+		main_memory[address_1] = write_val[24:32] 
+		print main_memory.items()
+	elif txt_inst == "sb":
+		address = complete_address(address)
+		main_memory[address] = write_val[24:32]
+		print main_memory.items()
 
 def memory_read(address, txt_inst, reg_to_write):
-  value = 'none'
-  if txt_inst == "lw":
-    address = complete_address(address)
-    address_1 = bin(int(address, 2) + 1)
-    address_1 = complete_address(address_1)
-    address_2 = bin(int(address_1, 2) + 1)
-    address_2 = complete_address(address_2)
-    address_3 = bin(int(address_2, 2) + 1)
-    address_3 = complete_address(address_3)
-    if main_memory.has_key(address) and main_memory.has_key(address_1) \
-    	and main_memory.has_key(address_2) and main_memory.has_key(address_3):
-      a = main_memory[address]
-      b = main_memory[address_1]
-      c = main_memory[address_2]
-      d = main_memory[address_3]
-      value = ''.join((a,b,c,d))
-      value = binary_to_int(value)
-  elif txt_inst == "lhu":
-    address = complete_address(address)
-    address_1 = bin(int(address, 2) + 1)
-    address_1 = complete_address(address_1)
-    if main_memory.has_key(address) and main_memory.has_key(address_1):
-      a = '0000000000000000'
-      b = main_memory[address]
-      c = main_memory[address_1]
-      value = ''.join((a,b,c))
-      value = binary_to_int(value)
-  elif txt_inst == "lbu":
-    address = complete_address(address)
-    if main_memory.has_key(address):
-      a = '000000000000000000000000'
-      b = main_memory[address]
-      value = ''.join((a,b))
-      value = binary_to_int(value)
-  elif txt_inst == "lb":
-    address = complete_address(address)
-    if main_memory.has_key(address): 
-      b = main_memory[address]
-      if b[0] == 1:
-        a = '111111111111111111111111'
-        value = ''.join((a,b))
-        value = binary_to_int(value)
-      else:
-        a = '000000000000000000000000'
-        value = ''.join((a,b))
-        value = binary_to_int(value)
-  elif txt_inst == "lh":
-    address = complete_address(address)
-    address_1 = bin(int(address, 2) + 1)
-    address_1 = complete_address(address_1)
-    if main_memory.has_key(address) and main_memory.has_key(address_1):
-      b = main_memory[address]
-      c = main_memory[address_1]
-      if b[0] == 1:
-        a = '1111111111111111'
-        value = ''.join((a,b,c))
-        value = binary_to_int(value)
-      else:
-        a = '0000000000000000'
-        value = ''.join((a,b,c))
-        value = binary_to_int(value)
-  elif txt_inst == "lui":
-        a = immediate_value
-        b = '0000000000000000'
-        value = ''.join((a,b))
-        value = binary_to_int(value)
-  write_back(value, reg_to_write)
+	value = 'none'
+	if txt_inst == "lw":
+		address = complete_address(address)
+		address_1 = bin(int(address, 2) + 1)[2:]
+		address_1 = complete_address(address_1)
+		address_2 = bin(int(address_1, 2) + 1)[2:]
+		address_2 = complete_address(address_2)
+		address_3 = bin(int(address_2, 2) + 1)[2:]
+		address_3 = complete_address(address_3)
+		if main_memory.has_key(address) and main_memory.has_key(address_1) \
+			and main_memory.has_key(address_2) and main_memory.has_key(address_3):
+			a = main_memory[address]
+			b = main_memory[address_1]
+			c = main_memory[address_2]
+			d = main_memory[address_3]
+			value = ''.join((a,b,c,d))
+			value = binary_to_int(value)
+	elif txt_inst == "lhu":
+		address = complete_address(address)
+		address_1 = bin(int(address, 2) + 1)[2:]
+		address_1 = complete_address(address_1)
+		if main_memory.has_key(address) and main_memory.has_key(address_1):
+			a = '0000000000000000'
+			b = main_memory[address]
+			c = main_memory[address_1]
+			value = ''.join((a,b,c))
+			value = binary_to_int(value)
+	elif txt_inst == "lbu":
+		address = complete_address(address)
+		if main_memory.has_key(address):
+			a = '000000000000000000000000'
+			b = main_memory[address]
+			value = ''.join((a,b))
+			value = binary_to_int(value)
+	elif txt_inst == "lb":
+		address = complete_address(address)
+		if main_memory.has_key(address):  
+			b = main_memory[address]
+			if b[0] == 1:
+				a = '111111111111111111111111'
+				value = ''.join((a,b))
+				value = binary_to_int(value)
+			else: 
+				a = '000000000000000000000000'
+				value = ''.join((a,b))
+				value = binary_to_int(value)
+	elif txt_inst == "lh":
+		address = complete_address(address)
+		address_1 = bin(int(address, 2) + 1)[2:]
+		address_1 = complete_address(address_1)
+		if main_memory.has_key(address) and main_memory.has_key(address_1):
+			b = main_memory[address]
+			c = main_memory[address_1]
+			if b[0] == 1:
+				a = '1111111111111111'
+				value = ''.join((a,b,c))
+				value = binary_to_int(value)
+			else: 
+				a = '0000000000000000'
+				value = ''.join((a,b,c))
+				value = binary_to_int(value)
+	write_back(value, reg_to_write, txt_inst)
+
+# sw: store 32 bits in 4 consecutive addresses (big endian)
+# sh: store rightmost 16 bits in 2 consecutive addresses (big endian)
+def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None):
+	if address != None:
+		print "Executing memory stage ..."
+		if control_signals["MemWrite"]:
+			if write_val != None:
+				print write_val
+				print "writing to memory ..."
+				memory_write(address, txt_inst, write_val)
+			else:
+				print "cannot write a none value to the memory"
+		elif control_signals["MemRead"] and control_signals["MemToReg"]:
+			if reg_to_write != None:
+				print "Reading from memory ..."
+				memory_read(address, txt_inst, reg_to_write)
+			else:
+				print "cannot load into an unspecified register"
+	else: 
+		if write_val != None and reg_to_write != None:
+			write_val = binary_to_int(write_val)
+			write_back(write_val, reg_to_write, txt_inst)
+		else:
+			print "cannot write back missing value or unspecified register"
+	return
 
 def fetch(address):
 	print "Now Fetching..."
@@ -313,7 +333,8 @@ def decode(txt_instruction):
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
 		opcode,function,rs,rt,rd,shamt)
 		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
-		memory(None, txt_op, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
+		print result
+		memory(txt_op, control_signals, address = None, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 	elif inst_type == I_TYPE:
 		opcode = int(instruction[0], 2)
 		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
@@ -329,7 +350,7 @@ def decode(txt_instruction):
 		rt = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
 		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
-		memory(complete_address(value_to_write(result)), txt_op, control_signals, write_val = int(rt, 16),
+		memory(txt_op, control_signals, address = complete_address(value_to_write(result)), write_val = value_to_write(reg_file[int(rt, 16)]),
 			reg_to_write = int(rs, 16))
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
@@ -342,25 +363,18 @@ def decode(txt_instruction):
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-decode('sw $s1, 1024($s0)')
+#decode('sw $s1, 1024($s0)')
+decode('add $t1, $s1, $s3')
 
 #ALUOp still missing
 #jal pc relative concat still missing
 
-# write back the value in the specified register
-def write_back(value, reg_to_write):
-  print value
-  if reg_to_write == 0:
-  	print "cannot write to register 0"
-  else:
-  	reg_file[reg_to_write] = value 
-  return
-
 if __name__ == '__main__':
-  if len(sys.argv) < 2:
-    print "Usage: %s <file name>" % sys.argv[0]
-  else:
-    f = open(sys.argv[1])
-    instructions = f.readlines()
-    # intrauctions is now a list of text instractions
-    # call main function here
+	if len(sys.argv) < 2:
+		print "Usage: %s <file name>" % sys.argv[0]
+	else:
+		f = open(sys.argv[1])
+		instructions = f.readlines()
+		# intrauctions is now a list of text instractions
+		# call main function here
+
