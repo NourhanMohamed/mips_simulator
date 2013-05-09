@@ -160,7 +160,6 @@ def print_reg_file():
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
 	print "Executing write back stage ..."
-	print "\n"
 	if value == 'none' or value == None:
 		print "Error, cannot write a non value to a register"
 		print_reg_file()
@@ -358,11 +357,9 @@ def memory_read(address, txt_inst, reg_to_write):
 def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None):
 	if address != None:
 		print "Executing memory stage ..."
-		print "\n"
 		if control_signals["MemWrite"]:
 			if write_val != None:
 				print "writing to memory ..."
-				print "\n"
 				memory_write(address, txt_inst, write_val)
 			else:
 				print "cannot write a none value to the memory"
