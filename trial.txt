@@ -1,0 +1,14 @@
+andi $t3, $t1, -1
+ori $t3, $t3, 5
+sll $t3, $t3, 2
+ori $t3, $t3, 0
+beq $t4, $t5, 2
+lw $t4, 0($t3)
+lh $t4, 0($t3)
+lb $t4, 0($t3)
+lhu $t4, 0($t3)
+lbu $t4, 0($t3)
+lui $t4, 0($t3)
+and $t4, $t4, $t4
+or $t4, $t4, $t4
+nor $t4, $t4, $t4

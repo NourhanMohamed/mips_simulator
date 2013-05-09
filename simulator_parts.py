@@ -116,10 +116,11 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	if txt_inst == "addi" or txt_inst == "andi" or txt_inst == "ori":
 		memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rt, 16))
 	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
-		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
-		or txt_inst == "sb":
+		or txt_inst == "lbu":
 		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2), 
 			int(rt, 16))
+	elif txt_inst == "sw" or txt_inst == "sh" or txt_inst == "sb":
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
 	else:
 		memory(txt_inst, control_signals)
 
@@ -360,6 +361,7 @@ def decode(txt_instruction):
 	instruction = re.split("\s|,\s",txt_instruction)
 	inst_type = None
 	txt_op = instruction[0]
+	print txt_op
 	try:
 		instruction[0] = r_instructions[instruction[0]]
 		inst_type = R_TYPE
@@ -397,13 +399,13 @@ def decode(txt_instruction):
 		function = int(instruction[0], 2)
 		rs = hex(0)
 		rt = hex(0)
-		if not txt_op == "jr":
+		if not txt_op == "jr" and not txt_op == "sll" and not txt_op == "srl":
 			rs = hex(int(registers[instruction[2]], 2))
 			rt = hex(int(registers[instruction[3]], 2))
 		rd = hex(int(registers[instruction[1]], 2))
 		if function == 0 or function == 2:
-			shamt = rt
-			rt = 0
+			shamt = int(rt, 16)
+			rt = hex(0)
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
 		opcode,function,rs,rt,rd,shamt)
 		execute_rformat(txt_op, rs, rt, rd, shamt, control_signals)
@@ -434,13 +436,13 @@ def decode(txt_instruction):
 def main():
 	global pc
 	no_of_inst = 0
-	for inst in instruction_memory:
+	for _ in instruction_memory:
 		print "-------------------------------------------------------------"
-		fetch(inst)
+		fetch(instruction_memory[pc])
 		no_of_inst += 1
 		print "PC current value = %s" % (pc)
-		print "-------------------------------------------------------------"
 	print "Clock cycles elapsed = %s" % (no_of_inst)
+	print "-------------------------------------------------------------"
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
