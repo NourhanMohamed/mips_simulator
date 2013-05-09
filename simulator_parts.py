@@ -372,11 +372,12 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 				print "\n"
 		print_memory()
 	else: 
-		if write_val != None and reg_to_write != None:
-			write_val = binary_to_int(write_val)
-			write_back(write_val, reg_to_write, txt_inst)
-		else:
-			print "cannot write back missing value or unspecified register"
+		if write_val != None
+      if reg_to_write != None:
+        write_val = binary_to_int(write_val)
+        write_back(write_val, reg_to_write, txt_inst)
+      else:
+        print "cannot write back missing value or unspecified register"
 	return
 
 def fetch(address):
