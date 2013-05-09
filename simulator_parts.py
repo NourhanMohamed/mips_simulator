@@ -111,7 +111,14 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 			pc = pc + offset
 		else:
 			result = 0
-	memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None)
+	if txt_inst == "addi" or txt_inst == "andi" or txt_inst == "ori":
+		memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rt, 16))
+	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
+		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
+		or txt_inst == "sb":
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
+	else:
+		memory(txt_inst, control_signals)
 
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
@@ -327,7 +334,6 @@ def decode(txt_instruction):
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-#decode('sw $s1, 1024($s0)')
 decode('add $t1, $s1, $s3')
 
 #ALUOp still missing
@@ -341,4 +347,3 @@ if __name__ == '__main__':
 		instruction_memory = f.readlines()
 		# intrauctions is now a list of text instractions
 		# call main function here
-
