@@ -77,11 +77,9 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	elif txt_inst == "sub":
 		result = operand1 - operand2
 	elif txt_inst == "sll":
-		result = operand1 * (2**shamt)
+		result = operand1 >> shamt
 	elif txt_inst == "srl":
-		result = operand1 / (2**shamt)
-		if result < 0:
-			result = 0
+		result = operand1 >> shamt
 	elif txt_inst == "and":
 		result = operand1 & operand2
 	elif txt_inst == "or":
@@ -447,7 +445,7 @@ def decode(txt_instruction):
 			shamt = int(instruction[3])
 			rs = hex(int(registers[instruction[2]], 2))
 			rt = hex(0)
-			rd = hex(0)
+			rd = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s \n" % (
 		opcode,function,rs,rt,rd,shamt)
 		execute_rformat(txt_op, rs, rt, rd, shamt, control_signals)
