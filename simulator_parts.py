@@ -21,9 +21,7 @@ registers = {
 	"$t8":"0b11000", "$t9":"0b11001", "$k0":"0b11010", "$k1":"0b11011", "$gp":"0b11100", "$sp":"0b11101",
 	"$fp":"0b11110", "$ra":"0b11111"
 }
-reg_file = []
-for i in range(0,32):
-	reg_file.append(0)
+reg_file = [0]*32
 
 R_TYPE = 0
 I_TYPE = 1
