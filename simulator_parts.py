@@ -309,9 +309,6 @@ def decode(txt_instruction):
 		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
 			off = re.match('\d+', instruction[2]).group()
 			offset = int(off)
-			if offset%4 != 0:
-				print "Terminating... Invalid Offset!"
-				return None
 			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
 		else:
 			rs = hex(int(registers[instruction[2]], 2))
