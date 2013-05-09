@@ -162,63 +162,145 @@ def write_back(value, reg_to_write, txt_inst):
 
 def memory_write(address, txt_inst, write_val):
 	if txt_inst == "sw":
-		print write_val
 		address = complete_address(address)
-		main_memory[address] = write_val[0:8]
-		address_1 = bin(int(address, 2) + 1)[2:]
-		address_1 = complete_address(address_1)
-		print address_1
-		main_memory[address_1] = write_val[8:16]
-		print main_memory.items()
-		address_2 = bin(int(address_1, 2) + 1)[2:]
-		address_2 = complete_address(address_2)
-		main_memory[address_2] = write_val [16:24]
-		print main_memory.items()
-		address_3 = bin(int(address_2, 2) + 1)[2:]
-		address_3 = complete_address(address_3)
-		main_memory[address_3] = write_val[24:32]
-		print main_memory.items()
+		if int(address, 2)%4 == 0:
+			main_memory[address] = write_val[0:8]
+			address_1 = bin(int(address, 2) + 1)[2:]
+			address_1 = complete_address(address_1)
+			print address_1
+			main_memory[address_1] = write_val[8:16]
+			print main_memory.items()
+			address_2 = bin(int(address_1, 2) + 1)[2:]
+			address_2 = complete_address(address_2)
+			main_memory[address_2] = write_val [16:24]
+			print main_memory.items()
+			address_3 = bin(int(address_2, 2) + 1)[2:]
+			address_3 = complete_address(address_3)
+			main_memory[address_3] = write_val[24:32]
+			print main_memory.items()
+		else:
+			print "Error, unexpected offset for sw instruction!!"
 	elif txt_inst == "sh":
 		address = complete_address(address)
-		main_memory[address] = write_val [16:24]
-		print main_memory.items()
-		address_1 = bin(int(address, 2) + 1)[2:]
-		address_1 = complete_address(address_1)
-		main_memory[address_1] = write_val[24:32] 
+		if int(address, 2)%2 == 0:
+			main_memory[address] = write_val [16:24]
+			print main_memory.items()
+			address_1 = bin(int(address, 2) + 1)[2:]
+			address_1 = complete_address(address_1)
+			main_memory[address_1] = write_val[24:32]
+			if int(address, 2)%4 == 0:
+				address_2 = bin(int(address_1, 2) + 1)[2:]
+				address_2 = complete_address(address_2)
+				main_memory[address_2] = '00000000'
+				address_3 = bin(int(address_2, 2) + 1)[2:]
+				address_3 = complete_address(address_3)
+				main_memory[address_3] ='00000000'
+			elif int(address, 2)%4 != 0:
+				address_2 = bin(int(address, 2) - 1)[2:]
+				address_2 = complete_address(address_2)
+				address_3 = bin(int(address_2, 2) - 1)[2:]
+				address_3 = complete_address(address_3)
+				if main_memory.has_key(address_2) == False:
+					main_memory[address_2] = '00000000'
+				if main_memory.has_key(address_3) == False:
+					main_memory[address_3] ='00000000'
+		else:
+				print "Error, unexpected offset for sh instruction!!"
 		print main_memory.items()
 	elif txt_inst == "sb":
+		mod = int(address, 2)%4
 		address = complete_address(address)
 		main_memory[address] = write_val[24:32]
+		if mod == 0:
+			address_1 = bin((int(address, 2) + 1))[2:]
+			address_1 = complete_address(address_1)
+			address_2 = bin((int(address_1, 2) + 1))[2:]
+			address_2 = complete_address(address_2)
+			address_3 = bin((int(address_2, 2) + 1))[2:]
+			address_3 = complete_address(address_3)
+			if main_memory.has_key(address_1) == False:
+				main_memory[address_1] ='00000000'
+			if main_memory.has_key(address_2) == False:
+				main_memory[address_2] ='00000000'
+			if main_memory.has_key(address_3) == False:
+				main_memory[address_3] ='00000000'
+		elif mod == 1:
+			address_1 = bin((int(address, 2) - 1))[2:]
+			address_1 = complete_address(address_1)
+			address_2 = bin((int(address, 2) + 1))[2:]
+			address_2 = complete_address(address_2)
+			address_3 = bin((int(address_2, 2) + 1))[2:]
+			address_3 = complete_address(address_3)
+			if main_memory.has_key(address_1) == False:
+				main_memory[address_1] ='00000000'
+			if main_memory.has_key(address_2) == False:
+				main_memory[address_2] ='00000000'
+			if main_memory.has_key(address_3) == False:
+				main_memory[address_3] ='00000000'
+		elif mod == 2:
+			address_1 = bin((int(address, 2) - 1))[2:]
+			address_1 = complete_address(address_1)
+			address_2 = bin((int(address_1, 2) - 1))[2:]
+			address_2 = complete_address(address_2)
+			address_3 = bin((int(address, 2) + 1))[2:]
+			address_3 = complete_address(address_3)
+			if main_memory.has_key(address_1) == False:
+				main_memory[address_1] ='00000000'
+			if main_memory.has_key(address_2) == False:
+				main_memory[address_2] ='00000000'
+			if main_memory.has_key(address_3) == False:
+				main_memory[address_3] ='00000000'
+		elif mod == 3:
+			address_1 = bin((int(address, 2) - 1))[2:]
+			address_1 = complete_address(address_1)
+			address_2 = bin((int(address_1, 2) - 1))[2:]
+			address_2 = complete_address(address_2)
+			address_3 = bin((int(address_2, 2) - 1))[2:]
+			address_3 = complete_address(address_3)
+			if main_memory.has_key(address_1) == False:
+				main_memory[address_1] ='00000000'
+			if main_memory.has_key(address_2) == False:
+				main_memory[address_2] ='00000000'
+			if main_memory.has_key(address_3) == False:
+				main_memory[address_3] ='00000000'
 		print main_memory.items()
 
 def memory_read(address, txt_inst, reg_to_write):
 	value = 'none'
 	if txt_inst == "lw":
 		address = complete_address(address)
-		address_1 = bin(int(address, 2) + 1)[2:]
-		address_1 = complete_address(address_1)
-		address_2 = bin(int(address_1, 2) + 1)[2:]
-		address_2 = complete_address(address_2)
-		address_3 = bin(int(address_2, 2) + 1)[2:]
-		address_3 = complete_address(address_3)
-		if main_memory.has_key(address) and main_memory.has_key(address_1) \
-			and main_memory.has_key(address_2) and main_memory.has_key(address_3):
-			a = main_memory[address]
-			b = main_memory[address_1]
-			c = main_memory[address_2]
-			d = main_memory[address_3]
-			value = ''.join((a,b,c,d))
-			value = binary_to_int(value)
+		if int(address, 2)%4 == 0:
+			address_1 = bin(int(address, 2) + 1)[2:]
+			address_1 = complete_address(address_1)
+			address_2 = bin(int(address_1, 2) + 1)[2:]
+			address_2 = complete_address(address_2)
+			address_3 = bin(int(address_2, 2) + 1)[2:]
+			address_3 = complete_address(address_3)
+			if main_memory.has_key(address) and main_memory.has_key(address_1) \
+				and main_memory.has_key(address_2) and main_memory.has_key(address_3):
+				a = main_memory[address]
+				b = main_memory[address_1]
+				c = main_memory[address_2]
+				d = main_memory[address_3]
+				value = ''.join((a,b,c,d))
+				value = binary_to_int(value)
+		else:
+			print "Error, unexpected offset for lw instruction!!"
+			return 
 	elif txt_inst == "lhu":
 		address = complete_address(address)
-		address_1 = bin(int(address, 2) + 1)[2:]
-		address_1 = complete_address(address_1)
-		if main_memory.has_key(address) and main_memory.has_key(address_1):
-			a = '0000000000000000'
-			b = main_memory[address]
-			c = main_memory[address_1]
-			value = ''.join((a,b,c))
-			value = binary_to_int(value)
+		if int(address, 2)%2 == 0:
+			address_1 = bin(int(address, 2) + 1)[2:]
+			address_1 = complete_address(address_1)
+			if main_memory.has_key(address) and main_memory.has_key(address_1):
+				a = '0000000000000000'
+				b = main_memory[address]
+				c = main_memory[address_1]
+				value = ''.join((a,b,c))
+				value = binary_to_int(value)
+		else:
+			print "Error, unexpected offset for lhu instruction"
+			return 
 	elif txt_inst == "lbu":
 		address = complete_address(address)
 		if main_memory.has_key(address):
@@ -240,19 +322,24 @@ def memory_read(address, txt_inst, reg_to_write):
 				value = binary_to_int(value)
 	elif txt_inst == "lh":
 		address = complete_address(address)
-		address_1 = bin(int(address, 2) + 1)[2:]
-		address_1 = complete_address(address_1)
-		if main_memory.has_key(address) and main_memory.has_key(address_1):
-			b = main_memory[address]
-			c = main_memory[address_1]
-			if b[0] == 1:
-				a = '1111111111111111'
-				value = ''.join((a,b,c))
-				value = binary_to_int(value)
-			else: 
-				a = '0000000000000000'
-				value = ''.join((a,b,c))
-				value = binary_to_int(value)
+		if int(address, 2)%2 == 0:
+			address_1 = bin(int(address, 2) + 1)[2:]
+			address_1 = complete_address(address_1)
+			if main_memory.has_key(address) and main_memory.has_key(address_1):
+				b = main_memory[address]
+				c = main_memory[address_1]
+				if b[0] == 1:
+					a = '1111111111111111'
+					value = ''.join((a,b,c))
+					value = binary_to_int(value)
+				else: 
+					a = '0000000000000000'
+					value = ''.join((a,b,c))
+					value = binary_to_int(value)
+		else:
+			print "Error, unexpected error for lh instruction"
+			return 
+	print value
 	write_back(value, reg_to_write, txt_inst)
 
 # sw: store 32 bits in 4 consecutive addresses (big endian)
@@ -366,7 +453,7 @@ def decode(txt_instruction):
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
 #decode('sw $s1, 1024($s0)')
-decode('add $t1, $s1, $s3')
+#decode('add $zero, $s1, $s3')
 
 #ALUOp still missing
 #jal pc relative concat still missing
