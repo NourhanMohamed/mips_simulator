@@ -127,18 +127,22 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
 	print "Executing write back stage ..."
-	if txt_inst == "lui":
-		a = value_to_write(value)[16:32]
-		b = '0000000000000000'
-		value = ''.join((a,b))
-		value =  binary_to_int(value)
-	if reg_to_write == 0:
-		print "cannot write to register 0"
-	else:
-		reg_file[reg_to_write] = value
-		print value 
-		print reg_file[reg_to_write]
-	return
+	if value == 'none' or value == None:
+		print "Error, none value"
+		return
+	else: 
+		if txt_inst == "lui":
+			a = value_to_write(value)[16:32]
+			b = '0000000000000000'
+			value = ''.join((a,b))
+			value =  binary_to_int(value)
+		if reg_to_write == 0:
+			print "cannot write to register 0"
+		else:
+			reg_file[reg_to_write] = value
+			print value 
+			print reg_file[reg_to_write]
+		return
 
 def memory_write(address, txt_inst, write_val):
 	if txt_inst == "sw":
@@ -432,6 +436,22 @@ def decode(txt_instruction):
 			j_address = hex(int(instruction[1], 10))
 			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s" % (opcode,j_address)
+
+		# value = struct.unpack(">h", s) for getting 16 bits from 32!
+
+# decode('sw $s1, 1024($s0)')
+# #decode('add $zero, $s1, $s3')
+# #decode('add $t1, $s1, $s3')
+# decode('addi $t1, $s1, -3')
+# decode('addi $t1, $t1, 3')
+# pc = 5
+# decode('jr $ra')
+# print reg_file[int(registers["$ra"], 2)]
+#
+
+
+#ALUOp still missing
+#jal pc relative concat still missing
 
 def main():
 	global pc
