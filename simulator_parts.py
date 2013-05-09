@@ -1,5 +1,6 @@
 import re, struct, string, sys
 from conversion_helpers import *
+from pprint import pprint
 
 r_instructions = {
 	"add":"0b100000", "sub":"0b100010", "sll":"0b000000", "srl":"0b000010", "and":"0b100100", "or":"0b100101",
@@ -123,11 +124,32 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	else:
 		memory(txt_inst, control_signals)
 
+def print_memory():
+	#print main_memory.items()
+	memory = main_memory.copy()
+	print "contents of memory: "
+	for key, value in memory.iteritems():
+		address = hex(int(key,2))
+		value = hex(int(value,2))
+		print("address %s: %s" % (address, value))
+	print "\n"
+	return
+
+def print_reg_file():
+	limit = len(reg_file)
+	print "contents of register file: "
+	for x in range(0, limit):
+		print("reg %s: %s" % (hex(x), hex(reg_file[x])))
+	print "\n"
+	return 
+
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
 	print "Executing write back stage ..."
+	print "\n"
 	if value == 'none' or value == None:
-		print "Error, none value"
+		print "Error, cannot write a non value to a register"
+		print_reg_file()
 		return
 	else: 
 		if txt_inst == "lui":
@@ -139,8 +161,7 @@ def write_back(value, reg_to_write, txt_inst):
 			print "cannot write to register 0"
 		else:
 			reg_file[reg_to_write] = value
-			print value 
-			print reg_file[reg_to_write]
+		print_reg_file()
 		return
 
 def memory_write(address, txt_inst, write_val):
@@ -150,24 +171,20 @@ def memory_write(address, txt_inst, write_val):
 			main_memory[address] = write_val[0:8]
 			address_1 = bin(int(address, 2) + 1)[2:]
 			address_1 = complete_address(address_1)
-			print address_1
 			main_memory[address_1] = write_val[8:16]
-			print main_memory.items()
 			address_2 = bin(int(address_1, 2) + 1)[2:]
 			address_2 = complete_address(address_2)
 			main_memory[address_2] = write_val [16:24]
-			print main_memory.items()
 			address_3 = bin(int(address_2, 2) + 1)[2:]
 			address_3 = complete_address(address_3)
 			main_memory[address_3] = write_val[24:32]
-			print main_memory.items()
+			print_memory()
 		else:
 			print "Error, unexpected offset for sw instruction!!"
 	elif txt_inst == "sh":
 		address = complete_address(address)
 		if int(address, 2)%2 == 0:
 			main_memory[address] = write_val [16:24]
-			print main_memory.items()
 			address_1 = bin(int(address, 2) + 1)[2:]
 			address_1 = complete_address(address_1)
 			main_memory[address_1] = write_val[24:32]
@@ -187,9 +204,9 @@ def memory_write(address, txt_inst, write_val):
 					main_memory[address_2] = '00000000'
 				if main_memory.has_key(address_3) == False:
 					main_memory[address_3] ='00000000'
+				print_memory()
 		else:
 				print "Error, unexpected offset for sh instruction!!"
-		print main_memory.items()
 	elif txt_inst == "sb":
 		mod = int(address, 2)%4
 		address = complete_address(address)
@@ -246,7 +263,7 @@ def memory_write(address, txt_inst, write_val):
 				main_memory[address_2] ='00000000'
 			if main_memory.has_key(address_3) == False:
 				main_memory[address_3] ='00000000'
-		print main_memory.items()
+			print_memory()
 
 def memory_read(address, txt_inst, reg_to_write):
 	value = 'none'
@@ -330,19 +347,23 @@ def memory_read(address, txt_inst, reg_to_write):
 def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write=None):
 	if address != None:
 		print "Executing memory stage ..."
+		print "\n"
 		if control_signals["MemWrite"]:
 			if write_val != None:
-				print write_val
 				print "writing to memory ..."
+				print "\n"
 				memory_write(address, txt_inst, write_val)
 			else:
 				print "cannot write a none value to the memory"
+				print "\n"
 		elif control_signals["MemRead"] and control_signals["MemToReg"]:
 			if reg_to_write != None:
 				print "Reading from memory ..."
+				print "\n"
 				memory_read(address, txt_inst, reg_to_write)
 			else:
 				print "cannot load into an unspecified register"
+				print "\n"
 	else: 
 		if write_val != None and reg_to_write != None:
 			write_val = binary_to_int(write_val)
@@ -442,11 +463,10 @@ def decode(txt_instruction):
 # #decode('add $t1, $s1, $s3')
 # decode('addi $t1, $s1, -3')
 # decode('addi $t1, $t1, 3')
+# decode('sw $t1, 1024($s0)')
 # pc = 5
 # decode('jr $ra')
 # print reg_file[int(registers["$ra"], 2)]
-#
-
 
 #ALUOp still missing
 #jal pc relative concat still missing
