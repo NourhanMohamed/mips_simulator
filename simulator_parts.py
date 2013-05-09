@@ -118,25 +118,30 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
 		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
 		or txt_inst == "sb":
-		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2), 
+			int(rt, 16))
 	else:
 		memory(txt_inst, control_signals)
 
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
 	print "Executing write back stage ..."
-	if txt_inst == "lui":
-		a = value_to_write(value)[16:32]
-		b = '0000000000000000'
-		value = ''.join((a,b))
-		value =  binary_to_int(value)
-	if reg_to_write == 0:
-		print "cannot write to register 0"
-	else:
-		reg_file[reg_to_write] = value
-		print value 
-		print reg_file[reg_to_write]
-	return
+	if value == 'none' or value == None:
+		print "Error, none value"
+		return
+	else: 
+		if txt_inst == "lui":
+			a = value_to_write(value)[16:32]
+			b = '0000000000000000'
+			value = ''.join((a,b))
+			value =  binary_to_int(value)
+		if reg_to_write == 0:
+			print "cannot write to register 0"
+		else:
+			reg_file[reg_to_write] = value
+			print value 
+			print reg_file[reg_to_write]
+		return
 
 def memory_write(address, txt_inst, write_val):
 	if txt_inst == "sw":
@@ -440,7 +445,8 @@ def decode(txt_instruction):
 # decode('jr $ra')
 # print reg_file[int(registers["$ra"], 2)]
 decode('addi $t1, $t1, 255')
-decode('sw $t1, 102($s0)')
+decode('sw $t1, 1024($s0)')
+decode('lw $t2, 1024($s0)')
 
 
 #ALUOp still missing
