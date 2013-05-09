@@ -54,7 +54,7 @@ def control(operation):
 	if operation == "sw" or operation == "sh" or operation == "sb":
 		mem_write = True
 
-	if branch or jump or mem_write:
+	if not branch and not jump and not mem_write:
 		reg_write = True
 
 	if branch or jump or reg_dst:
@@ -76,15 +76,15 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	elif txt_inst == "sub":
 		result = operand1 - operand2
 	elif txt_inst == "sll":
-		result = operand1 * 2**shamt
+		result = operand1 * (2**shamt)
 	elif txt_inst == "srl":
-		result = operand1 / 2**shamt
+		result = operand1 / (2**shamt)
 	elif txt_inst == "and":
-		result = operand1 and operand2
+		result = operand1 & operand2
 	elif txt_inst == "or":
-		result = operand1 or operand2
+		result = operand1 | operand2
 	elif txt_inst == "nor":
-		result = not (operand1 or operand2)
+		result = ~ (operand1 | operand2)
 	elif txt_inst == "slt":
 		result = (0, 1)[operand1 > operand2]
 	elif txt_inst == "jr":
@@ -430,14 +430,16 @@ def decode(txt_instruction):
 		opcode = 0
 		shamt = 0
 		function = int(instruction[0], 2)
-		rs = hex(0)
-		rt = hex(0)
-		if not txt_op == "jr" and not txt_op == "sll" and not txt_op == "srl":
+		if txt_op == "jr":
+			rs = hex(int(registers[instruction[2]], 2))
+			rt = hex(0)
+		else:
 			rs = hex(int(registers[instruction[2]], 2))
 			rt = hex(int(registers[instruction[3]], 2))
 		rd = hex(int(registers[instruction[1]], 2))
 		if function == 0 or function == 2:
 			shamt = int(rt, 16)
+			rs = hex(int(registers[instruction[2]], 2))
 			rt = hex(0)
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s \n" % (
 		opcode,function,rs,rt,rd,shamt)
