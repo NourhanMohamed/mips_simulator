@@ -64,6 +64,8 @@ def control(operation):
 	return control_signals
 
 def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
+	print "Executing..."
+	print "Zero = 0\n"
 	global pc
 	result = 0
 	operand1 = reg_file[int(rs,16)]
@@ -89,6 +91,7 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 
 def execute_iformat(txt_inst, rs, rt, offset, control_signals):
+	print "Executing..."
 	global pc
 	result = 0
 	operand1 = reg_file[int(rs, 16)]
@@ -97,22 +100,27 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
 		or txt_inst == "sb":
 		result = operand1 + offset
+		print "Zero = 0\n"
 	elif txt_inst == "andi":
 		result = operand1 & offset
+		print "Zero = 0\n"
 	elif txt_inst == "ori":
 		result = operand1 | offset
+		print "Zero = 0\n"
 	elif txt_inst == "beq":
 		if operand1 == operand2:
 			result = 1
 			pc = pc + offset
 		else:
 			result = 0
+		print "Zero = %s\n" % (result)
 	elif txt_inst == "bne":
 		if operand1 != operand2:
 			result = 1
 			pc = pc + offset
 		else:
 			result = 0
+		print "Zero = %s\n" % (result)
 	if txt_inst == "addi" or txt_inst == "andi" or txt_inst == "ori":
 		memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rt, 16))
 	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
