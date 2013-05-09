@@ -118,7 +118,8 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
 		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
 		or txt_inst == "sb":
-		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2), 
+			int(rt, 16))
 	else:
 		memory(txt_inst, control_signals)
 
@@ -260,8 +261,10 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 	return
 
 def fetch(address):
+	global pc
 	print "Now Fetching..."
-	instruction = inst_memory[address]
+	pc += 1
+	decode(address)
 
 def decode(txt_instruction):
 	global pc, reg_file
@@ -341,16 +344,16 @@ def decode(txt_instruction):
 			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s" % (opcode,j_address)
 
-		# value = struct.unpack(">h", s) for getting 16 bits from 32!
-
-decode('addi $t1, $s1, -3')
-decode('addi $t1, $t1, 3')
-pc = 5
-decode('jr $ra')
-print reg_file[int(registers["$ra"], 2)]
-
-#ALUOp still missing
-#jal pc relative concat still missing
+def main():
+	global pc
+	no_of_inst = 0
+	for inst in instruction_memory:
+		print "-------------------------------------------------------------"
+		fetch(inst)
+		no_of_inst += 1
+		print "PC current value = %s" % (pc)
+		print "-------------------------------------------------------------"
+	print "Clock cycles elapsed = %s" % (no_of_inst)
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
