@@ -192,7 +192,7 @@ def memory_write(address, txt_inst, write_val):
 			address_3 = complete_address(address_3)
 			main_memory[address_3] = write_val[24:32]
 		else:
-			print "Error, unexpected offset for sw instruction!!"
+			print "Error, memory address not aligned!!"
 	elif txt_inst == "sh":
 		address = complete_address(address)
 		if int(address, 2)%2 == 0:
@@ -217,7 +217,7 @@ def memory_write(address, txt_inst, write_val):
 				if main_memory.has_key(address_3) == False:
 					main_memory[address_3] ='00000000'
 		else:
-				print "Error, unexpected offset for sh instruction!!"
+				print "Error, memory address not aligned!!"
 	elif txt_inst == "sb":
 		mod = int(address, 2)%4
 		address = complete_address(address)
@@ -295,7 +295,7 @@ def memory_read(address, txt_inst, reg_to_write):
 				value = ''.join((a,b,c,d))
 				value = binary_to_int(value)
 		else:
-			print "Error, unexpected offset for lw instruction!!"
+			print "Error, memory address not aligned!!"
 			return 
 	elif txt_inst == "lhu":
 		address = complete_address(address)
@@ -309,7 +309,7 @@ def memory_read(address, txt_inst, reg_to_write):
 				value = ''.join((a,b,c))
 				value = binary_to_int(value)
 		else:
-			print "Error, unexpected offset for lhu instruction"
+			print "Error, memory address not aligned!!"
 			return 
 	elif txt_inst == "lbu":
 		address = complete_address(address)
@@ -347,7 +347,7 @@ def memory_read(address, txt_inst, reg_to_write):
 					value = ''.join((a,b,c))
 					value = binary_to_int(value)
 		else:
-			print "Error, unexpected error for lh instruction"
+			print "Error, memory address not aligned!!"
 			return 
 	print value
 	write_back(value, reg_to_write, txt_inst)
