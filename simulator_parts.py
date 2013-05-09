@@ -88,7 +88,9 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 
 def execute_iformat(txt_inst, rs, rt, offset, control_signals):
+	global pc
 	result = 0
+	operand1 = reg_file[int(rs, 16)]
 	operand2 = reg_file[int(rt, 16)]
 	if txt_inst == "addi" or txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" \
 		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
@@ -261,6 +263,7 @@ def fetch(address):
 	instruction = inst_memory[address]
 
 def decode(txt_instruction):
+	global pc
 	txt_instruction = string.lower(txt_instruction)
 	print "Decoding..."
 	instruction = re.split("\s|,\s",txt_instruction)
@@ -325,15 +328,20 @@ def decode(txt_instruction):
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
 		if opcode == 3:
-			pc_relative = int(instruction[0],2) * 4
-			j_address = "0b1111" + bin(pc_relative)[2:]
+			pc_relative = int(instruction[1], 10) * 4
+			j_address = hex(int("0b" + value_to_write(pc)[0:4] + bin(pc_relative)[2:], 2))
+			pc = int(j_address, 16)
 		elif opcode == 2:
-			j_address = hex(int(instruction[0],2))
+			j_address = hex(int(instruction[1], 10))
+			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s" % (opcode,j_address)
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-decode('add $t1, $s1, $s3')
+decode('addi $t1, $s1, -3')
+decode('addi $t1, $t1, 3')
+decode('j 12')
+print pc
 
 #ALUOp still missing
 #jal pc relative concat still missing
