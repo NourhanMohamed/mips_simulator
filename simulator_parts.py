@@ -53,10 +53,10 @@ def control(operation):
 	if operation == "sw" or operation == "sh" or operation == "sb":
 		mem_write = True
 
-	if not branch or not jump or not mem_write:
+	if branch or jump or mem_write:
 		reg_write = True
 
-	if not branch or not jump or not reg_dst:
+	if branch or jump or reg_dst:
 		alu_src = True
 
 	control_signals = { "RegDst":reg_dst, "Branch":branch, "MemRead":mem_read, "MemToReg":mem_to_reg,
@@ -64,6 +64,7 @@ def control(operation):
 	return control_signals
 
 def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
+	global pc
 	result = 0
 	operand1 = reg_file[int(rs,16)]
 	operand2 = reg_file[int(rt,16)]
@@ -84,11 +85,13 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	elif txt_inst == "slt":
 		result = (0, 1)[operand1 > operand2]
 	elif txt_inst == "jr":
-		result = operand1	
+		pc = result
 	memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 
 def execute_iformat(txt_inst, rs, rt, offset, control_signals):
+	global pc
 	result = 0
+	operand1 = reg_file[int(rs, 16)]
 	operand2 = reg_file[int(rt, 16)]
 	if txt_inst == "addi" or txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" \
 		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
@@ -348,6 +351,8 @@ def fetch(address):
 	instruction = inst_memory[address]
 
 def decode(txt_instruction):
+	global pc
+	global reg_file
 	txt_instruction = string.lower(txt_instruction)
 	print "Decoding..."
 	instruction = re.split("\s|,\s",txt_instruction)
@@ -388,8 +393,11 @@ def decode(txt_instruction):
 		opcode = 0
 		shamt = 0
 		function = int(instruction[0], 2)
-		rs = hex(int(registers[instruction[2]], 2))
-		rt = hex(int(registers[instruction[3]], 2))
+		rs = hex(0)
+		rt = hex(0)
+		if not txt_op == "jr":
+			rs = hex(int(registers[instruction[2]], 2))
+			rt = hex(int(registers[instruction[3]], 2))
 		rd = hex(int(registers[instruction[1]], 2))
 		if function == 0 or function == 2:
 			shamt = rt
@@ -412,18 +420,28 @@ def decode(txt_instruction):
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
 		if opcode == 3:
-			pc_relative = int(instruction[0],2) * 4
-			j_address = "0b1111" + bin(pc_relative)[2:]
+			reg_file[int(registers["$ra"], 2)] = pc
+			pc_relative = int(instruction[1], 10) * 4
+			j_address = hex(int("0b" + value_to_write(pc)[0:4] + bin(pc_relative)[2:], 2))
+			pc = int(j_address, 16)
 		elif opcode == 2:
-			j_address = hex(int(instruction[0],2))
+			j_address = hex(int(instruction[1], 10))
+			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s" % (opcode,j_address)
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
+# decode('sw $s1, 1024($s0)')
+# #decode('add $zero, $s1, $s3')
+# #decode('add $t1, $s1, $s3')
+# decode('addi $t1, $s1, -3')
+# decode('addi $t1, $t1, 3')
+# pc = 5
+# decode('jr $ra')
+# print reg_file[int(registers["$ra"], 2)]
+decode('addi $t1, $t1, 255')
+decode('sw $t1, 102($s0)')
 
-decode('sw $s1, 1024($s0)')
-#decode('add $zero, $s1, $s3')
-#decode('add $t1, $s1, $s3')
 
 #ALUOp still missing
 #jal pc relative concat still missing
