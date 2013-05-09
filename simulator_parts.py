@@ -437,11 +437,12 @@ def decode(txt_instruction):
 		opcode = int(instruction[0], 2)
 		if opcode == 3:
 			reg_file[int(registers["$ra"], 2)] = pc
-			pc_relative = int(instruction[1], 10) * 4
+			pc_relative = int(instruction[1], 10)
 			j_address = hex(int("0b" + value_to_write(pc)[0:4] + bin(pc_relative)[2:], 2))
 			pc = int(j_address, 16)
 		elif opcode == 2:
-			j_address = hex(int(instruction[1], 10))
+			pc_relative = int(instruction[1], 10)
+			j_address = hex(int("0b" + value_to_write(pc)[0:4] + bin(pc_relative)[2:], 2))
 			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s \n" % (opcode,j_address)
 
