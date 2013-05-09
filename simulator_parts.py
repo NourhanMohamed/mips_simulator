@@ -89,7 +89,6 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 
 def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	result = 0
-	operand1 = reg_file[int(rs, 16)]
 	operand2 = reg_file[int(rt, 16)]
 	if txt_inst == "addi" or txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" \
 		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \

@@ -1,0 +1,113 @@
+Brief description:
+
+The program takes the assembly file path as an argument and then reads every
+intruction into the instruction memory which is then read by the fetch fuction
+and passed to the decode. The program ends when the last instruction in the
+instruction memory is executed.
+
+We have dictionaries that translate the text representation of the instructions
+and registers to their binary equivalent. for use within the program and during
+printing
+
+The registers all start out as 0 except the $sp which starts out as the last
+address in the memory.
+
+We have a control unit tht gets the opcode and returns a dictionary of all the
+control signals.
+
+We have functions that execute r, j and i format instructions separately based
+on the opcode of the function. Once the execute function has finished it calls
+the memory with the required action read/write.
+
+We have a function that implements the memeory write or read and writeback. It
+also handles reading and writing of half words and bytes and stores them in
+memory accordingly. It also handles the printing of the used part of the memory.
+The maximum memory size is 4 GB since that is the largest address the
+instruction format can support. However from the point of view of the simulator
+the memory is allocated when it is first written to so as to avoid the alocation
+of 4GBs every time the program is run even though they may not be needed.
+
+The decode function takes the entire text instruction and then uses the
+different helper methods to find the instruction type and then call the
+appropriate execute function according to instruction type.
+
+All the separate methods handle the printing of the wires comming in and out of
+them when called
+
+
+The control unit:
+This is the simple psudocode for the control unit
+
+reg_dst = branch = mem_read = mem_to_reg = mem_write = reg_write = alu_src = jump = False
+alu_op = 0
+if operation in r_instructions:
+  reg_dst = True
+
+if operation == "beq" or operation == "bne":
+  branch = True
+
+if operation == "jal" or operation == "j" or operation == "jr":
+  jump = True
+
+if operation == "lw" or operation == "lh" or operation == "lb" or operation == "lhu" or operation == "lbu":
+  mem_read = True
+  mem_to_reg = True
+
+if operation == "sw" or operation == "sh" or operation == "sb":
+  mem_write = True
+
+if not branch or not jump or not mem_write:
+  reg_write = True
+
+if not branch or not jump or not reg_dst:
+  alu_src = True
+
+Assumptions:
+We assumed that there are no lables and branch instructions actually enter the
+number of instruction to skip or go back to and j instruction takes a 0-based
+address. Also we assumed that the entire file would be executed and the
+execution would halt when the last instruction has finished. All instructions
+and registers are assumed to be lowercase
+
+
+Three sample programs:
+program 1:
+add $t0, $zero, $zero
+addi $t1, $zero, 5
+bne $t1, $t0, 3
+sub $t2, $t2, $t1
+srl $t1, $t1, 1
+j 2
+slt $t3, $t2, $t1
+
+program 2:
+jal 1
+j 3
+jr $ra
+add $zero, $zero, $zero
+
+program 3:
+andi $t3, $t1, -1
+ori $t3, $t3, 5
+sll $t3, $t3, 2
+ori $t3, $t3, 0
+beq $t4, $t5, 2
+lw $t4, 0($t3)
+lh $t4, 0($t3)
+lb $t4, 0($t3)
+lhu $t4, 0($t3)
+lbu $t4, 0($t3)
+sw $t4, 0($t3)
+sh $t4, 0($t3)
+sb $t4, 0($t3)
+lui $t4, 0($t3)
+and $t4, $t4, $t4
+or $t4, $t4, $t4
+nor $t4, $t4, $t4
+
+The work split:
+Nourhan Mohamed: Took the decode funtion and the fetch and related helper
+  methods
+Nourhan Zakaria: Took the memory, read and write and right back
+Mohamed Ashraf: Took the execute instructions and the part that parses the file
+in to the instruction memory
