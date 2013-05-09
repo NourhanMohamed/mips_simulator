@@ -24,7 +24,7 @@ registers = {
 }
 reg_file = [0]*32
 reg_file[int(registers["$sp"], 2)] = 2**32 - 1
-main_memory = {"0101":"111"}
+main_memory = {}
 instruction_memory = []
 pc = 0
 
