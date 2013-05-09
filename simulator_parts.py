@@ -264,8 +264,7 @@ def fetch(address):
 	instruction = inst_memory[address]
 
 def decode(txt_instruction):
-	global pc
-	global reg_file
+	global pc, reg_file
 	txt_instruction = string.lower(txt_instruction)
 	print "Decoding..."
 	instruction = re.split("\s|,\s",txt_instruction)
