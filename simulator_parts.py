@@ -70,8 +70,7 @@ def complete_address(value):
 	else: 
 		limit = 32-length
 		value = str(value)
-		for x in range(0, limit):
-			value = ''.join(('0',value))
+		value = '0' * limit + value
 		return value
 
 # to transform the integer to binary string of 32 bits to be written in memory

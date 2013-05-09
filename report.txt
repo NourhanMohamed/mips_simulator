@@ -1,0 +1,83 @@
+Brief description:
+
+The program takes the assembly file path as an argument and then reads every
+intruction into the instruction memory which is then read by the fetch fuction
+and passed to the decode.
+
+We have dictionaries that translate the text representation of the instructions
+and registers to their binary equivalent. We have a control unit tht gets the
+opcode and retruns a dictionary of all the control signals. We have functions
+that execute r, j and i format instructions separately based on the opcode of
+the function. We have a function that implements the memeory write or read and
+writeback. The decode funtion takes the entire text instruction and then uses
+the different helper methods to find the instruction type and then call the
+appropriate execute function according to instruction type. The appropriate
+value is then passed to the memmmry funtion which calls the writeback function
+if needed.
+
+The control unit:
+This is the simple psudocode for the control unit
+
+reg_dst = branch = mem_read = mem_to_reg = mem_write = reg_write = alu_src = jump = False
+alu_op = 0
+if operation in r_instructions:
+  reg_dst = True
+
+if operation == "beq" or operation == "bne":
+  branch = True
+
+if operation == "jal" or operation == "j" or operation == "jr":
+  jump = True
+
+if operation == "lw" or operation == "lh" or operation == "lb" or operation == "lhu" or operation == "lbu":
+  mem_read = True
+  mem_to_reg = True
+
+if operation == "sw" or operation == "sh" or operation == "sb":
+  mem_write = True
+
+if not branch or not jump or not mem_write:
+  reg_write = True
+
+if not branch or not jump or not reg_dst:
+  alu_src = True
+
+Assumptions:
+We assumed that there are no lables and branch instructions actually enter the
+number of instruction to skip or go back to and j instruction takes a 0-based
+address. Also we assumed that the entire file would be executed and the
+execution would halt when the last instruction has finished.
+
+
+Three sample programs:
+program 1:
+add $t0, $zero, $zero
+addi $t1, $zero, 5
+bne $t1, $t0, 7
+sub $t2, $t2, $t1
+srl $t1, $t1, 1
+andi $t3, $t1, -1
+sll $t3, $t3, 2
+ori $t3, $t3, 0
+bne $t4, $t5, 2
+lw $t4, 0($t3)
+lh $t4, 0($t3)
+lb $t4, 0($t3)
+lhu $t4, 0($t3)
+lbu $t4, 0($t3)
+sw $t4, 0($t3)
+sh $t4, 0($t3)
+sb $t4, 0($t3)
+lui $t4, 0($t3)
+and $t4, $t4, $t4
+or $t4, $t4, $t4
+nor $t4, $t4, $t4
+j 2
+add $zero, $zero, $zero
+
+The work split:
+Nourhan Mohamed: Took the decode funtion and the fetch and related helper
+  methods
+Nourhan Zakaria: Took the memory, read and write and right back
+Mohamed Ashraf: Took the execute instructions and the part the parses the file
+in to the instruction memory
