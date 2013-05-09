@@ -1,6 +1,7 @@
 import re, struct, string, sys
 from conversion_helpers import *
 from pprint import pprint
+from bitstring import BitArray
 
 r_instructions = {
 	"add":"0b100000", "sub":"0b100010", "sll":"0b000000", "srl":"0b000010", "and":"0b100100", "or":"0b100101",
@@ -148,7 +149,11 @@ def print_reg_file():
 	limit = len(reg_file)
 	print "contents of register file: "
 	for x in range(0, limit):
-		print("reg %s: %s" % (hex(x), hex(reg_file[x])))
+		n = BitArray(int=x, length=6).bin
+		n = n[1:]
+		n =''.join(('0b',n))
+		name = registers.keys()[registers.values().index(n)]
+		print("reg %s: %s" % (name, hex(reg_file[x])))
 	print "\n"
 	return 
 
