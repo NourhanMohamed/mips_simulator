@@ -24,7 +24,7 @@ registers = {
 	"$fp":"0b11110", "$ra":"0b11111"
 }
 reg_file = [0]*32
-reg_file[int(registers["$sp"], 2)] = 2**32 - 1
+reg_file[int(registers["$sp"], 2)] = int("0xffffffff", 16)
 main_memory = {}
 instruction_memory = []
 pc = 0
@@ -153,7 +153,7 @@ def print_reg_file():
 		n = n[1:]
 		n =''.join(('0b',n))
 		name = registers.keys()[registers.values().index(n)]
-		print("reg %s: %s" % (name, hex(reg_file[x])))
+		print "reg %s: 0x%s" % (name, str(BitArray(int=reg_file[x],length=36).hex)[1:])
 	print "\n"
 	return 
 
@@ -377,12 +377,12 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 				print "\n"
 		print_memory()
 	else: 
-		if write_val != None
-      if reg_to_write != None:
-        write_val = binary_to_int(write_val)
-        write_back(write_val, reg_to_write, txt_inst)
-      else:
-        print "cannot write back missing value or unspecified register"
+		if write_val != None:
+			if reg_to_write != None:
+				write_val = binary_to_int(write_val)
+				write_back(write_val, reg_to_write, txt_inst)
+			else:
+				print "cannot write back missing value or unspecified register"
 	return
 
 def fetch(address):
