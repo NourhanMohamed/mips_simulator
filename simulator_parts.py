@@ -162,6 +162,7 @@ def write_back(value, reg_to_write, txt_inst):
 
 def memory_write(address, txt_inst, write_val):
 	if txt_inst == "sw":
+		print write_val
 		address = complete_address(address)
 		main_memory[address] = write_val[0:8]
 		address_1 = bin(int(address, 2) + 1)[2:]
@@ -261,6 +262,7 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 		print "Executing memory stage ..."
 		if control_signals["MemWrite"]:
 			if write_val != None:
+				print write_val
 				print "writing to memory ..."
 				memory_write(address, txt_inst, write_val)
 			else:
@@ -271,12 +273,12 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 				memory_read(address, txt_inst, reg_to_write)
 			else:
 				print "cannot load into an unspecified register"
-		else: 
-			if write_val != None and reg_to_write != None:
-				write_val = binary_to_int(write_val)
-				write_back(write_val, reg_to_write, txt_inst)
-			else:
-				print "cannot write back missing value or unspecified register"
+	else: 
+		if write_val != None and reg_to_write != None:
+			write_val = binary_to_int(write_val)
+			write_back(write_val, reg_to_write, txt_inst)
+		else:
+			print "cannot write back missing value or unspecified register"
 	return
 
 def fetch(address):
@@ -333,7 +335,8 @@ def decode(txt_instruction):
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
 		opcode,function,rs,rt,rd,shamt)
 		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
-		memory(None, txt_op, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
+		print result
+		memory(txt_op, control_signals, address = None, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 	elif inst_type == I_TYPE:
 		opcode = int(instruction[0], 2)
 		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
@@ -349,7 +352,7 @@ def decode(txt_instruction):
 		rt = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
 		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
-		memory(txt_op, control_signals, address = complete_address(value_to_write(result)), write_val = value_to_write(int(rt, 16)),
+		memory(txt_op, control_signals, address = complete_address(value_to_write(result)), write_val = value_to_write(reg_file[int(rt, 16)]),
 			reg_to_write = int(rs, 16))
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
@@ -362,7 +365,8 @@ def decode(txt_instruction):
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-decode('sw $s1, 1024($s0)')
+#decode('sw $s1, 1024($s0)')
+decode('add $t1, $s1, $s3')
 
 #ALUOp still missing
 #jal pc relative concat still missing
