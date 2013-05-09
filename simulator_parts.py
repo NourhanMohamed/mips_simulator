@@ -1,5 +1,5 @@
-import re, struct, string, bitstring, sys
-from bitstring import BitArray
+import re, struct, string, sys
+from conversion_helpers import *
 
 r_instructions = {
 	"add":"0b100000", "sub":"0b100010", "sll":"0b000000", "srl":"0b000010", "and":"0b100100", "or":"0b100101",
@@ -21,9 +21,11 @@ registers = {
 	"$t8":"0b11000", "$t9":"0b11001", "$k0":"0b11010", "$k1":"0b11011", "$gp":"0b11100", "$sp":"0b11101",
 	"$fp":"0b11110", "$ra":"0b11111"
 }
-reg_file = []
-for i in range(0,32):
-	reg_file.append(0)
+reg_file = [0]*32
+reg_file[int(registers["$sp"], 2)] = 2**32 - 1
+main_memory = {}
+instruction_memory = []
+pc = 0
 
 R_TYPE = 0
 I_TYPE = 1
@@ -61,51 +63,10 @@ def control(operation):
 	"MemWrite":mem_write, "RegWrite":reg_write, "ALUSrc":alu_src, "Jump":jump, "ALUOp":alu_op }
 	return control_signals
 
-
-# to always make sure the address is in the right format  
-def complete_address(value):
-	length = len(value)
-	if length > 32 or length == 0:
-		return 'none' 
-	elif length == 32:
-		return value
-	else: 
-		limit = 32-length
-		value = str(value)
-		for x in range(0, limit):
-			value = ''.join(('0',value))
-		return value
-
-# to transform the integer to binary string of 32 bits to be written in memory
-def value_to_write(value):
-	b = BitArray(int=value, length=32)
-	b = b.bin
-	return b
-
-# transform binary string loaded from memory to int 
-def binary_to_int(value):
-	a = BitArray(bin= value)
-	a = a.int 
-	return a
-
-def binary_or_int_to_hex(value, type):
-	if type == BIN: #binary_to_hex
-		a = hex(int(value, 2))
-		return a 
-	elif type == INT: #int_to_hex
-		a = hex(value)
-		return a 
-
-def hex_to_binary_or_int(value, type):
-	if type == INT:
-		a = int(value, 16)
-		return a 
-	elif type == BIN:
-		a = bin(int('0xa', 16))
-		return a
-
-def execute_rformat(txt_inst, operand1, operand2, shamt):
+def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	result = 0
+	operand1 = reg_file[int(rs,16)]
+	operand2 = reg_file[int(rt,16)]
 	if txt_inst == "add":
 		result = operand1 + operand2
 	elif txt_inst == "sub":
@@ -123,11 +84,12 @@ def execute_rformat(txt_inst, operand1, operand2, shamt):
 	elif txt_inst == "slt":
 		result = (0, 1)[operand1 > operand2]
 	elif txt_inst == "jr":
-		result = operand1
-	return result
+		result = operand1	
+	memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 
-def execute_iformat(txt_inst, operand1, operand2, offset):
+def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	result = 0
+	operand2 = reg_file[int(rt, 16)]
 	if txt_inst == "addi" or txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" \
 		or txt_inst == "lhu" or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
 		or txt_inst == "sb":
@@ -137,12 +99,25 @@ def execute_iformat(txt_inst, operand1, operand2, offset):
 	elif txt_inst == "ori":
 		result = operand1 | offset
 	elif txt_inst == "beq":
-		result = (0, 1)[operand1 == operand2]
+		if operand1 == operand2:
+			result = 1
+			pc = pc + offset
+		else:
+			result = 0
 	elif txt_inst == "bne":
-		result = (0, 1)[operand1 != operand2]
-	return result
-
-main_memory = {}
+		if operand1 != operand2:
+			result = 1
+			pc = pc + offset
+		else:
+			result = 0
+	if txt_inst == "addi" or txt_inst == "andi" or txt_inst == "ori":
+		memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rt, 16))
+	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
+		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
+		or txt_inst == "sb":
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
+	else:
+		memory(txt_inst, control_signals)
 
 # write back the value in the specified register
 def write_back(value, reg_to_write, txt_inst):
@@ -394,7 +369,7 @@ def decode(txt_instruction):
 				instruction[0] = None
 
 	if not instruction[0]:
-		return
+		return None
 
 	control_signals = control(txt_op)
 	bool_to_signal = { True:1, False:0 }
@@ -421,26 +396,19 @@ def decode(txt_instruction):
 			rt = 0
 		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
 		opcode,function,rs,rt,rd,shamt)
-		result = execute_rformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], shamt)
-		print result
-		memory(txt_op, control_signals, address = None, write_val = value_to_write(result), reg_to_write = int(rd, 16))
+		execute_rformat(txt_op, rs, rt, rd, shamt, control_signals)
 	elif inst_type == I_TYPE:
 		opcode = int(instruction[0], 2)
 		if re.match("\d+\(\$[a-z]\d\)", instruction[2]):
 			off = re.match('\d+', instruction[2]).group()
 			offset = int(off)
-			if offset%4 != 0:
-				print "Terminating... Invalid Offset!"
-				return
 			rs = hex(int(registers[instruction[2][len(off)+1:len(off)+4]], 2))
 		else:
 			rs = hex(int(registers[instruction[2]], 2))
 			offset = int(instruction[3])
 		rt = hex(int(registers[instruction[1]], 2))
 		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
-		result = execute_iformat(txt_op, reg_file[int(rs,16)], reg_file[int(rt,16)], offset)
-		memory(txt_op, control_signals, address = complete_address(value_to_write(result)), write_val = value_to_write(reg_file[int(rt, 16)]),
-			reg_to_write = int(rs, 16))
+		execute_iformat(txt_op, rs, rt, offset, control_signals)
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
 		if opcode == 3:
@@ -452,8 +420,10 @@ def decode(txt_instruction):
 
 		# value = struct.unpack(">h", s) for getting 16 bits from 32!
 
-#decode('sw $s1, 1024($s0)')
+
+decode('sw $s1, 1024($s0)')
 #decode('add $zero, $s1, $s3')
+#decode('add $t1, $s1, $s3')
 
 #ALUOp still missing
 #jal pc relative concat still missing
@@ -463,7 +433,6 @@ if __name__ == '__main__':
 		print "Usage: %s <file name>" % sys.argv[0]
 	else:
 		f = open(sys.argv[1])
-		instructions = f.readlines()
+		instruction_memory = f.readlines()
 		# intrauctions is now a list of text instractions
 		# call main function here
-
