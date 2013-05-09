@@ -467,6 +467,7 @@ def decode(txt_instruction):
 			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s \n" % (opcode,j_address)
 
+
 def main():
 	global pc
 	no_of_inst = 0
