@@ -187,7 +187,6 @@ def memory_write(address, txt_inst, write_val):
 			address_3 = bin(int(address_2, 2) + 1)[2:]
 			address_3 = complete_address(address_3)
 			main_memory[address_3] = write_val[24:32]
-			print_memory()
 		else:
 			print "Error, unexpected offset for sw instruction!!"
 	elif txt_inst == "sh":
@@ -213,7 +212,6 @@ def memory_write(address, txt_inst, write_val):
 					main_memory[address_2] = '00000000'
 				if main_memory.has_key(address_3) == False:
 					main_memory[address_3] ='00000000'
-				print_memory()
 		else:
 				print "Error, unexpected offset for sh instruction!!"
 	elif txt_inst == "sb":
@@ -272,7 +270,6 @@ def memory_write(address, txt_inst, write_val):
 				main_memory[address_2] ='00000000'
 			if main_memory.has_key(address_3) == False:
 				main_memory[address_3] ='00000000'
-			print_memory()
 
 def memory_read(address, txt_inst, reg_to_write):
 	value = 'none'
@@ -373,6 +370,7 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 			else:
 				print "cannot load into an unspecified register"
 				print "\n"
+		print_memory()
 	else: 
 		if write_val != None and reg_to_write != None:
 			write_val = binary_to_int(write_val)
@@ -468,6 +466,7 @@ def decode(txt_instruction):
 			j_address = hex(int("0b" + value_to_write(pc)[0:4] + bin(pc_relative)[2:], 2))
 			pc = int(instruction[1], 10)
 		print "Opcode is %i, Address %s \n" % (opcode,j_address)
+
 
 def main():
 	global pc
