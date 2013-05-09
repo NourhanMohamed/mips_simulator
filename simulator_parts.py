@@ -352,12 +352,13 @@ def memory(txt_inst, control_signals, address=None, write_val=None, reg_to_write
 	return
 
 def fetch(address):
+	global pc
 	print "Now Fetching..."
-	instruction = inst_memory[address]
+	pc += 1
+	decode(address)
 
 def decode(txt_instruction):
-	global pc
-	global reg_file
+	global pc, reg_file
 	txt_instruction = string.lower(txt_instruction)
 	print "Decoding..."
 	instruction = re.split("\s|,\s",txt_instruction)
@@ -444,13 +445,22 @@ def decode(txt_instruction):
 # pc = 5
 # decode('jr $ra')
 # print reg_file[int(registers["$ra"], 2)]
-decode('addi $t1, $t1, 255')
-decode('sw $t1, 1024($s0)')
-decode('lw $t2, 1024($s0)')
+#
 
 
 #ALUOp still missing
 #jal pc relative concat still missing
+
+def main():
+	global pc
+	no_of_inst = 0
+	for inst in instruction_memory:
+		print "-------------------------------------------------------------"
+		fetch(inst)
+		no_of_inst += 1
+		print "PC current value = %s" % (pc)
+		print "-------------------------------------------------------------"
+	print "Clock cycles elapsed = %s" % (no_of_inst)
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
@@ -458,5 +468,4 @@ if __name__ == '__main__':
 	else:
 		f = open(sys.argv[1])
 		instruction_memory = f.readlines()
-		# intrauctions is now a list of text instractions
-		# call main function here
+		main()
