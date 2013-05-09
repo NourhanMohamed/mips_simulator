@@ -64,6 +64,7 @@ def control(operation):
 	return control_signals
 
 def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
+	global pc
 	result = 0
 	operand1 = reg_file[int(rs,16)]
 	operand2 = reg_file[int(rt,16)]
@@ -84,7 +85,7 @@ def execute_rformat(txt_inst, rs, rt, rd, shamt, control_signals):
 	elif txt_inst == "slt":
 		result = (0, 1)[operand1 > operand2]
 	elif txt_inst == "jr":
-		result = operand1	
+		result = pc	
 	memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rd, 16))
 
 def execute_iformat(txt_inst, rs, rt, offset, control_signals):
@@ -340,8 +341,9 @@ def decode(txt_instruction):
 
 decode('addi $t1, $s1, -3')
 decode('addi $t1, $t1, 3')
-decode('j 12')
-print pc
+pc = 5
+decode('jr $ra')
+print reg_file[int(registers["$jr"], 2)]
 
 #ALUOp still missing
 #jal pc relative concat still missing
