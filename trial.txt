@@ -8,6 +8,9 @@ lh $t4, 0($t3)
 lb $t4, 0($t3)
 lhu $t4, 0($t3)
 lbu $t4, 0($t3)
+sw $t4, 0($t3)
+sh $t4, 0($t3)
+sb $t4, 0($t3)
 lui $t4, 0($t3)
 and $t4, $t4, $t4
 or $t4, $t4, $t4
