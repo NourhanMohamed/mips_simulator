@@ -117,10 +117,11 @@ def execute_iformat(txt_inst, rs, rt, offset, control_signals):
 	if txt_inst == "addi" or txt_inst == "andi" or txt_inst == "ori":
 		memory(txt_inst, control_signals, write_val = value_to_write(result), reg_to_write = int(rt, 16))
 	elif txt_inst == "lw" or txt_inst == "lh" or txt_inst == "lb" or txt_inst == "lhu" \
-		or txt_inst == "lbu" or txt_inst == "sw" or txt_inst == "sh" \
-		or txt_inst == "sb":
+		or txt_inst == "lbu":
 		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2), 
 			int(rt, 16))
+	elif txt_inst == "sw" or txt_inst == "sh" or txt_inst == "sb":
+		memory(txt_inst, control_signals, complete_address(bin(result)[2:]), value_to_write(operand2))
 	else:
 		memory(txt_inst, control_signals)
 
@@ -385,6 +386,7 @@ def decode(txt_instruction):
 	instruction = re.split("\s|,\s",txt_instruction)
 	inst_type = None
 	txt_op = instruction[0]
+	print "Instruction being decoded is %s" % (txt_op)
 	try:
 		instruction[0] = r_instructions[instruction[0]]
 		inst_type = R_TYPE
@@ -405,7 +407,7 @@ def decode(txt_instruction):
 
 	control_signals = control(txt_op)
 	bool_to_signal = { True:1, False:0 }
-	print "Generating control signals..."
+	print "\nGenerating control signals..."
 	print "RegDst = %i" % bool_to_signal[control_signals["RegDst"]]
 	print "Branch = %i" % bool_to_signal[control_signals["Branch"]]
 	print "Jump = %i" % bool_to_signal[control_signals["Jump"]]
@@ -414,7 +416,7 @@ def decode(txt_instruction):
 	print "MemToReg = %i" % bool_to_signal[control_signals["MemToReg"]]
 	print "RegWrite = %i" % bool_to_signal[control_signals["RegWrite"]]
 	print "ALUSrc = %i" % bool_to_signal[control_signals["ALUSrc"]]
-	print "ALUOp = %i" % control_signals["ALUOp"]
+	print "ALUOp = %i \n" % control_signals["ALUOp"]
 
 	if inst_type == R_TYPE:
 		opcode = 0
@@ -422,14 +424,14 @@ def decode(txt_instruction):
 		function = int(instruction[0], 2)
 		rs = hex(0)
 		rt = hex(0)
-		if not txt_op == "jr":
+		if not txt_op == "jr" and not txt_op == "sll" and not txt_op == "srl":
 			rs = hex(int(registers[instruction[2]], 2))
 			rt = hex(int(registers[instruction[3]], 2))
 		rd = hex(int(registers[instruction[1]], 2))
 		if function == 0 or function == 2:
-			shamt = rt
-			rt = 0
-		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s" % (
+			shamt = int(rt, 16)
+			rt = hex(0)
+		print "Opcode is %i, Function is %i, Source1 is %s, Source2 is %s, Dest is %s, Shamt is %s \n" % (
 		opcode,function,rs,rt,rd,shamt)
 		execute_rformat(txt_op, rs, rt, rd, shamt, control_signals)
 	elif inst_type == I_TYPE:
@@ -442,7 +444,7 @@ def decode(txt_instruction):
 			rs = hex(int(registers[instruction[2]], 2))
 			offset = int(instruction[3])
 		rt = hex(int(registers[instruction[1]], 2))
-		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i" % (opcode,rs,rt,offset)
+		print "Opcode is %i, Source1 is %s, Dest is %s, Offset is %i \n" % (opcode,rs,rt,offset)
 		execute_iformat(txt_op, rs, rt, offset, control_signals)
 	elif inst_type == J_TYPE:
 		opcode = int(instruction[0], 2)
@@ -454,34 +456,19 @@ def decode(txt_instruction):
 		elif opcode == 2:
 			j_address = hex(int(instruction[1], 10))
 			pc = int(instruction[1], 10)
-		print "Opcode is %i, Address %s" % (opcode,j_address)
-
-		# value = struct.unpack(">h", s) for getting 16 bits from 32!
-
-# decode('sw $s1, 1024($s0)')
-# #decode('add $zero, $s1, $s3')
-# #decode('add $t1, $s1, $s3')
-# decode('addi $t1, $s1, -3')
-# decode('addi $t1, $t1, 3')
-# decode('sw $t1, 1024($s0)')
-# pc = 5
-# decode('jr $ra')
-# print reg_file[int(registers["$ra"], 2)]
-
-#ALUOp still missing
-#jal pc relative concat still missing
+		print "Opcode is %i, Address %s \n" % (opcode,j_address)
 
 def main():
 	global pc
 	no_of_inst = 0
-	for inst in instruction_memory:
+	while pc < len(instruction_memory):
 		print "-------------------------------------------------------------"
-		fetch(inst)
+		fetch(instruction_memory[pc])
 		no_of_inst += 1
-		print "PC current value = %s" % (pc)
-		print "-------------------------------------------------------------"
-	print "Clock cycles elapsed = %s" % (no_of_inst)
-
+		print "PC current value = %s" % (pc*4)
+	print "-------------------------------------------------------------"
+	print "Total clock cycles elapsed = %s" % (no_of_inst)
+	print "Program is Terminating... Bye Bye\n"
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print "Usage: %s <file name>" % sys.argv[0]

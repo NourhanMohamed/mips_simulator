@@ -16,6 +16,8 @@ def complete_address(value):
 
 # to transform the integer to binary string of 32 bits to be written in memory
 def value_to_write(value):
+  if value == "none":
+    return -1
   b = BitArray(int=value, length=32)
   b = b.bin
   return b
